@@ -1,0 +1,6 @@
+gorix:
+  app:
+    port: 8080
+    prod: false
+
+
