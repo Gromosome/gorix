@@ -15,6 +15,8 @@ func NewPromotionController(promotionService *PromotionService) *PromotionContro
 	}
 }
 
-func (c *PromotionController) GetPromotionList() (gorix.Method, gorix.Path, []string) {
-	return gorix.GET, "/find", c.promotionService.GetPromotionList()
+func (c *PromotionController) GetPromotionList() (gorix.Method, gorix.Path, gorix.RouteHandler) {
+	return gorix.GET, "/find", func(ctx *gorix.Context) (any, error) {
+		return c.promotionService.GetPromotionList(), nil
+	}
 }

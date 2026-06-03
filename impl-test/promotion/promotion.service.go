@@ -1,5 +1,7 @@
 package promotion
 
+import "fmt"
+
 type PromotionService struct {
 }
 
@@ -7,5 +9,5 @@ func NewPromotionService() *PromotionService {
 	return &PromotionService{}
 }
 func (s *PromotionService) GetPromotionList() []string {
-	return []string{"promo1", "promo2", "promo3"}
+	panic(fmt.Errorf("promotion service error"))
 }

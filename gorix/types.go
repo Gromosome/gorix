@@ -106,6 +106,7 @@ type ExceptionContext = hook.ExceptionContext
 type MiddlewareConfig = hook.MiddlewareConfig
 type InterceptorConfig = hook.InterceptorConfig
 type FilterConfig = hook.FilterConfig
+type RouteHandler = core.RouteHandler
 
 var Apply = hook.Apply
 var ApplyInterceptor = hook.ApplyInterceptor

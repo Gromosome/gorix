@@ -157,60 +157,6 @@ func (a *App) TryListen(addr string) error {
 	return http.ListenAndServe(addr, a.mux)
 }
 
-//	func (a *App) registerModule(module any) error {
-//		moduleValue := reflect.ValueOf(module)
-//
-//		if moduleValue.Kind() != reflect.Pointer {
-//			return fmt.Errorf("gorix: module must be pointer, got %s", moduleValue.Kind())
-//		}
-//
-//		moduleType := moduleValue.Type()
-//		moduleName := moduleType.Elem().Name()
-//
-//		basePathProvider, ok := module.(basePathModule)
-//		if !ok {
-//			return fmt.Errorf("gorix: module %s must implement BasePath() gorix.BasePath", moduleName)
-//		}
-//
-//		basePath := basePathProvider.BasePath()
-//
-//		if providersModule, ok := module.(providerModule); ok {
-//			for _, provider := range providersModule.Providers() {
-//				if err := a.container.RegisterProvider(provider); err != nil {
-//					return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
-//				}
-//			}
-//		}
-//
-//		controllersModule, ok := module.(controllerModule)
-//		if !ok {
-//			return fmt.Errorf("gorix: module %s must implement Controllers() []any", moduleName)
-//		}
-//
-//		for _, controllerConstructor := range controllersModule.Controllers() {
-//			controllerValue, err := a.container.Build(controllerConstructor)
-//			if err != nil {
-//				return fmt.Errorf("gorix: module %s controller build failed: %w", moduleName, err)
-//			}
-//
-//			if controllerValue.Kind() == reflect.Pointer {
-//				controllerValue = controllerValue.Elem()
-//			}
-//
-//			if controllerValue.Kind() != reflect.Struct {
-//				return fmt.Errorf(
-//					"gorix: module %s controller constructor must return controller struct or pointer to struct",
-//					moduleName,
-//				)
-//			}
-//
-//			if err := a.registerController(moduleName, string(basePath), controllerValue); err != nil {
-//				return err
-//			}
-//		}
-//
-//		return nil
-//	}
 func (a *App) registerModuleControllers(module any) error {
 	moduleValue := reflect.ValueOf(module)
 
@@ -276,7 +222,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 
 		if methodType.NumOut() != 3 {
 			return fmt.Errorf(
-				"gorix: controller method %s must return 3 values: gorix.Method, gorix.Path, response",
+				"gorix: controller method %s must return 3 values: gorix.Method, gorix.Path, gorix.RouteHandler",
 				methodInfo.Name,
 			)
 		}
@@ -295,6 +241,14 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 		if !ok {
 			return fmt.Errorf(
 				"gorix: controller method %s second return value must be gorix.Path",
+				methodInfo.Name,
+			)
+		}
+
+		routeAction, ok := startupOut[2].Interface().(core.RouteHandler)
+		if !ok {
+			return fmt.Errorf(
+				"gorix: controller method %s third return value must be gorix.RouteHandler",
 				methodInfo.Name,
 			)
 		}
@@ -333,7 +287,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 				return nil
 			}
 
-			ctx := &hook.ExecutionContext{
+			execCtx := &hook.ExecutionContext{
 				Context:    c,
 				Method:     httpMethod,
 				Path:       fullPath,
@@ -359,8 +313,8 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			}()
 
 			for _, interceptor := range routeInterceptors {
-				if err := interceptor.Before(ctx); err != nil {
-					ctx.Error = err
+				if err := interceptor.Before(execCtx); err != nil {
+					execCtx.Error = err
 
 					a.handleException(&hook.ExceptionContext{
 						Context:    c,
@@ -376,13 +330,28 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 				}
 			}
 
-			result := method.Call(nil)
-			response := result[2].Interface()
-			ctx.Response = response
+			response, err := routeAction(c)
+			if err != nil {
+				execCtx.Error = err
+
+				a.handleException(&hook.ExceptionContext{
+					Context:    c,
+					Method:     httpMethod,
+					Path:       fullPath,
+					Module:     moduleName,
+					Controller: controllerName,
+					Handler:    methodInfo.Name,
+					Error:      err,
+					StatusCode: core.StatusInternalServerError,
+				})
+				return nil
+			}
+
+			execCtx.Response = response
 
 			for j := len(routeInterceptors) - 1; j >= 0; j-- {
-				if err := routeInterceptors[j].After(ctx); err != nil {
-					ctx.Error = err
+				if err := routeInterceptors[j].After(execCtx); err != nil {
+					execCtx.Error = err
 
 					a.handleException(&hook.ExceptionContext{
 						Context:    c,
@@ -398,8 +367,9 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 				}
 			}
 
-			return c.Status(core.StatusOK).JSON(ctx.Response)
+			return c.Status(core.StatusOK).JSON(execCtx.Response)
 		}
+
 		routeMiddlewares := a.resolveMiddlewares(fullPath)
 		finalHandler := hook.ChainMiddlewares(routeHandler, routeMiddlewares...)
 
@@ -420,6 +390,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			}
 		})
 	}
+
 	return nil
 }
 

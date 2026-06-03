@@ -3,6 +3,7 @@ package core
 type Method string
 type Path string
 type BasePath string
+type RouteHandler func(c *Context) (any, error)
 
 const (
 	GET    Method = "GET"

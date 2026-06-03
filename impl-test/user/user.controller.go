@@ -17,10 +17,14 @@ func NewUserController(userService *UserService, promotionService *promotion.Pro
 	}
 }
 
-func (c *UserController) GetUserList() (gorix.Method, gorix.Path, []string) {
-	return gorix.GET, "/find", c.userService.GetUserList()
+func (c *UserController) GetUserList() (gorix.Method, gorix.Path, gorix.RouteHandler) {
+	return gorix.GET, "/find", func(ctx *gorix.Context) (any, error) {
+		return c.promotionService.GetPromotionList(), nil
+	}
 }
 
-func (c *UserController) GetUserPromotions() (gorix.Method, gorix.Path, []string) {
-	return gorix.GET, "/promotions", c.promotionService.GetPromotionList()
+func (c *UserController) GetUserPromotions() (gorix.Method, gorix.Path, gorix.RouteHandler) {
+	return gorix.GET, "/promotions", func(ctx *gorix.Context) (any, error) {
+		return c.promotionService.GetPromotionList(), nil
+	}
 }

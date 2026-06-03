@@ -5,25 +5,44 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v3"
+	"github.com/Gromosome/gorix/gorix/config"
 )
 
 type Config struct {
-	Gorix GorixConfig `yaml:"gorix"`
+	Gorix GorixConfig
 }
 
 type GorixConfig struct {
-	App AppConfig `yaml:"app"`
+	App AppConfig
 }
 
 type AppConfig struct {
-	Prod *bool  `yaml:"prod"`
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Prod *bool
+	Host string
+	Port int
 }
 
 func LoadConfig(root string) Config {
-	config := Config{
+	cfg := DefaultConfig()
+
+	path := filepath.Join(root, "application.yaml")
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return cfg
+	}
+
+	parsed := config.ParseYAML(string(data))
+
+	cfg.Gorix.App.Prod = config.GetBoolPtr(parsed, "gorix.app.prod")
+	cfg.Gorix.App.Host = config.GetString(parsed, "gorix.app.host", "0.0.0.0")
+	cfg.Gorix.App.Port = config.GetInt(parsed, "gorix.app.port", 8080)
+
+	return cfg
+}
+
+func DefaultConfig() Config {
+	return Config{
 		Gorix: GorixConfig{
 			App: AppConfig{
 				Prod: nil,
@@ -32,33 +51,13 @@ func LoadConfig(root string) Config {
 			},
 		},
 	}
-
-	path := filepath.Join(root, "application.yaml")
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return config
-	}
-
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return config
-	}
-
-	if config.Gorix.App.Host == "" {
-		config.Gorix.App.Host = "0.0.0.0"
-	}
-
-	if config.Gorix.App.Port == 0 {
-		config.Gorix.App.Port = 8080
-	}
-
-	return config
 }
 
 func (c Config) IsProd() bool {
 	if c.Gorix.App.Prod == nil {
-		return false
+		return true
 	}
+
 	return *c.Gorix.App.Prod
 }
 

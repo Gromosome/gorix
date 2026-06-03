@@ -1,0 +1,127 @@
+package config
+
+import (
+	"strconv"
+	"strings"
+)
+
+func GetMap(data map[string]YAMLValue, path string) (map[string]YAMLValue, bool) {
+	value, ok := Get(data, path)
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := value.(map[string]YAMLValue)
+	return m, ok
+}
+
+func GetString(data map[string]YAMLValue, path string, fallback string) string {
+	value, ok := Get(data, path)
+	if !ok || value == nil {
+		return fallback
+	}
+
+	switch v := value.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(v)
+	default:
+		return fallback
+	}
+}
+
+func GetInt(data map[string]YAMLValue, path string, fallback int) int {
+	value, ok := Get(data, path)
+	if !ok || value == nil {
+		return fallback
+	}
+
+	switch v := value.(type) {
+	case int:
+		return v
+	case float64:
+		return int(v)
+	case string:
+		parsed, err := strconv.Atoi(v)
+		if err == nil {
+			return parsed
+		}
+	}
+
+	return fallback
+}
+
+func GetBoolPtr(data map[string]YAMLValue, path string) *bool {
+	value, ok := Get(data, path)
+	if !ok || value == nil {
+		return nil
+	}
+
+	switch v := value.(type) {
+	case bool:
+		return &v
+	case string:
+		parsed, err := strconv.ParseBool(v)
+		if err == nil {
+			return &parsed
+		}
+	}
+
+	return nil
+}
+
+func GetStringSlice(data map[string]YAMLValue, path string) []string {
+	value, ok := Get(data, path)
+	if !ok || value == nil {
+		return nil
+	}
+
+	list, ok := value.([]YAMLValue)
+	if !ok {
+		return nil
+	}
+
+	result := make([]string, 0, len(list))
+
+	for _, item := range list {
+		switch v := item.(type) {
+		case string:
+			result = append(result, v)
+		case int:
+			result = append(result, strconv.Itoa(v))
+		case float64:
+			result = append(result, strconv.FormatFloat(v, 'f', -1, 64))
+		case bool:
+			result = append(result, strconv.FormatBool(v))
+		}
+	}
+
+	return result
+}
+
+func Get(data map[string]YAMLValue, path string) (YAMLValue, bool) {
+	parts := strings.Split(path, ".")
+
+	var current YAMLValue = data
+
+	for _, part := range parts {
+		currentMap, ok := current.(map[string]YAMLValue)
+		if !ok {
+			return nil, false
+		}
+
+		value, ok := currentMap[part]
+		if !ok {
+			return nil, false
+		}
+
+		current = value
+	}
+
+	return current, true
+}
