@@ -7,15 +7,28 @@ import (
 	"go/token"
 )
 
-func parseGoFile(path string) (*ast.File, error) {
+func parseGoFile(path string) (*token.FileSet, *ast.File, error) {
 	fs := token.NewFileSet()
 
 	file, err := parser.ParseFile(fs, path, nil, parser.ParseComments)
 	if err != nil {
-		return nil, fmt.Errorf("gorix validation error: failed to parse %s: %w", path, err)
+		return nil, nil, newValidationError(
+			path,
+			1,
+			1,
+			fmt.Sprintf("failed to parse file: %v", err),
+		)
 	}
 
-	return file, nil
+	return fs, file, nil
+}
+func positionOf(fs *token.FileSet, node ast.Node) (int, int) {
+	if node == nil {
+		return 1, 1
+	}
+
+	pos := fs.Position(node.Pos())
+	return pos.Line, pos.Column
 }
 
 func collectStructs(file *ast.File) []string {

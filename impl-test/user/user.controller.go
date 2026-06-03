@@ -6,12 +6,12 @@ import (
 )
 
 type UserController struct {
-	userService      UserService
-	promotionService promotion.PromotionService
+	userService      *UserService
+	promotionService *promotion.PromotionService
 }
 
-func NewUserController(userService UserService, promotionService promotion.PromotionService) UserController {
-	return UserController{
+func NewUserController(userService *UserService, promotionService *promotion.PromotionService) *UserController {
+	return &UserController{
 		userService:      userService,
 		promotionService: promotionService,
 	}

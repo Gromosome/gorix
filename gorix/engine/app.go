@@ -10,16 +10,28 @@ import (
 	"time"
 
 	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/di"
 	"github.com/Gromosome/gorix/gorix/hook"
 )
 
-type App struct {
-	mux         *http.ServeMux
-	routes      map[string]bool
-	routeInfos  []core.RouteInfo
-	projectRoot string
-	config      core.Config
+type basePathModule interface {
+	BasePath() core.BasePath
+}
 
+type providerModule interface {
+	Providers() []any
+}
+
+type controllerModule interface {
+	Controllers() []any
+}
+type App struct {
+	mux          *http.ServeMux
+	routes       map[string]bool
+	routeInfos   []core.RouteInfo
+	projectRoot  string
+	config       core.Config
+	container    *di.Container
 	middlewares  []hook.MiddlewareConfig
 	interceptors []hook.InterceptorConfig
 	filters      []hook.FilterConfig
@@ -38,6 +50,7 @@ func NewApp() *App {
 		routeInfos:   make([]core.RouteInfo, 0),
 		projectRoot:  wd,
 		config:       config,
+		container:    di.NewContainer(),
 		middlewares:  make([]hook.MiddlewareConfig, 0),
 		interceptors: make([]hook.InterceptorConfig, 0),
 		filters:      make([]hook.FilterConfig, 0),
@@ -104,7 +117,25 @@ func (a *App) TryRegisterModules(modules ...any) error {
 			return fmt.Errorf("gorix: nil module cannot be registered")
 		}
 
-		if err := a.registerModule(module); err != nil {
+		moduleValue := reflect.ValueOf(module)
+		if moduleValue.Kind() != reflect.Pointer {
+			return fmt.Errorf("gorix: module must be pointer, got %s", moduleValue.Kind())
+		}
+
+		moduleType := moduleValue.Type()
+		moduleName := moduleType.Elem().Name()
+
+		if providersModule, ok := module.(providerModule); ok {
+			for _, provider := range providersModule.Providers() {
+				if err := a.container.RegisterProvider(provider); err != nil {
+					return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
+				}
+			}
+		}
+	}
+
+	for _, module := range modules {
+		if err := a.registerModuleControllers(module); err != nil {
 			return err
 		}
 	}
@@ -126,7 +157,61 @@ func (a *App) TryListen(addr string) error {
 	return http.ListenAndServe(addr, a.mux)
 }
 
-func (a *App) registerModule(module any) error {
+//	func (a *App) registerModule(module any) error {
+//		moduleValue := reflect.ValueOf(module)
+//
+//		if moduleValue.Kind() != reflect.Pointer {
+//			return fmt.Errorf("gorix: module must be pointer, got %s", moduleValue.Kind())
+//		}
+//
+//		moduleType := moduleValue.Type()
+//		moduleName := moduleType.Elem().Name()
+//
+//		basePathProvider, ok := module.(basePathModule)
+//		if !ok {
+//			return fmt.Errorf("gorix: module %s must implement BasePath() gorix.BasePath", moduleName)
+//		}
+//
+//		basePath := basePathProvider.BasePath()
+//
+//		if providersModule, ok := module.(providerModule); ok {
+//			for _, provider := range providersModule.Providers() {
+//				if err := a.container.RegisterProvider(provider); err != nil {
+//					return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
+//				}
+//			}
+//		}
+//
+//		controllersModule, ok := module.(controllerModule)
+//		if !ok {
+//			return fmt.Errorf("gorix: module %s must implement Controllers() []any", moduleName)
+//		}
+//
+//		for _, controllerConstructor := range controllersModule.Controllers() {
+//			controllerValue, err := a.container.Build(controllerConstructor)
+//			if err != nil {
+//				return fmt.Errorf("gorix: module %s controller build failed: %w", moduleName, err)
+//			}
+//
+//			if controllerValue.Kind() == reflect.Pointer {
+//				controllerValue = controllerValue.Elem()
+//			}
+//
+//			if controllerValue.Kind() != reflect.Struct {
+//				return fmt.Errorf(
+//					"gorix: module %s controller constructor must return controller struct or pointer to struct",
+//					moduleName,
+//				)
+//			}
+//
+//			if err := a.registerController(moduleName, string(basePath), controllerValue); err != nil {
+//				return err
+//			}
+//		}
+//
+//		return nil
+//	}
+func (a *App) registerModuleControllers(module any) error {
 	moduleValue := reflect.ValueOf(module)
 
 	if moduleValue.Kind() != reflect.Pointer {
@@ -134,41 +219,36 @@ func (a *App) registerModule(module any) error {
 	}
 
 	moduleType := moduleValue.Type()
+	moduleName := moduleType.Elem().Name()
 
-	for i := 0; i < moduleValue.NumMethod(); i++ {
-		method := moduleValue.Method(i)
-		methodInfo := moduleType.Method(i)
-		methodType := method.Type()
+	basePathProvider, ok := module.(basePathModule)
+	if !ok {
+		return fmt.Errorf("gorix: module %s must implement BasePath() gorix.BasePath", moduleName)
+	}
 
-		if methodType.NumIn() != 0 {
-			continue
+	basePath := basePathProvider.BasePath()
+
+	controllersModule, ok := module.(controllerModule)
+	if !ok {
+		return fmt.Errorf("gorix: module %s must implement Controllers() []any", moduleName)
+	}
+
+	for _, controllerConstructor := range controllersModule.Controllers() {
+		controllerValue, err := a.container.Build(controllerConstructor)
+		if err != nil {
+			return fmt.Errorf("gorix: module %s controller build failed: %w", moduleName, err)
 		}
 
-		if methodType.NumOut() != 2 {
-			continue
-		}
-
-		out := method.Call(nil)
-
-		basePathValue := out[0]
-		controllerValue := out[1]
-
-		basePath, ok := basePathValue.Interface().(core.BasePath)
-		if !ok {
-			return fmt.Errorf(
-				"gorix: module method %s must return gorix.BasePath as first return value",
-				methodInfo.Name,
-			)
+		if controllerValue.Kind() == reflect.Pointer {
+			controllerValue = controllerValue.Elem()
 		}
 
 		if controllerValue.Kind() != reflect.Struct {
 			return fmt.Errorf(
-				"gorix: module method %s second return value must be controller struct",
-				methodInfo.Name,
+				"gorix: module %s controller constructor must return controller struct or pointer to struct",
+				moduleName,
 			)
 		}
-
-		moduleName := moduleType.Elem().Name()
 
 		if err := a.registerController(moduleName, string(basePath), controllerValue); err != nil {
 			return err
@@ -177,7 +257,6 @@ func (a *App) registerModule(module any) error {
 
 	return nil
 }
-
 func (a *App) registerController(moduleName string, basePath string, controllerValue reflect.Value) error {
 	controllerName := controllerValue.Type().Name()
 

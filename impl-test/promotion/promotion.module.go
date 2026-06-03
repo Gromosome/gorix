@@ -1,22 +1,26 @@
 package promotion
 
-import (
-	"github.com/Gromosome/gorix/gorix"
-)
+import "github.com/Gromosome/gorix/gorix"
 
 type PromotionModule struct {
-	promotionController PromotionController
 }
 
 func NewPromotionModule() *PromotionModule {
-	promotionService := PromotionService{}
-	promotionController := NewPromotionController(promotionService)
+	return &PromotionModule{}
+}
 
-	return &PromotionModule{
-		promotionController: promotionController,
+func (m *PromotionModule) BasePath() gorix.BasePath {
+	return "/promotion"
+}
+
+func (m *PromotionModule) Providers() []any {
+	return []any{
+		NewPromotionService,
 	}
 }
 
-func (m *PromotionModule) GetPromotionController() (gorix.BasePath, PromotionController) {
-	return "/promotion", m.promotionController
+func (m *PromotionModule) Controllers() []any {
+	return []any{
+		NewPromotionController,
+	}
 }

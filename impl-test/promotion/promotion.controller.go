@@ -6,11 +6,11 @@ import (
 )
 
 type PromotionController struct {
-	promotionService PromotionService
+	promotionService *PromotionService
 }
 
-func NewPromotionController(promotionService PromotionService) PromotionController {
-	return PromotionController{
+func NewPromotionController(promotionService *PromotionService) *PromotionController {
+	return &PromotionController{
 		promotionService: promotionService,
 	}
 }

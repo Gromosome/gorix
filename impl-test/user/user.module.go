@@ -2,7 +2,6 @@ package user
 
 import (
 	"github.com/Gromosome/gorix/gorix"
-	"github.com/Gromosome/gorix/impl-test/promotion"
 )
 
 type UserModule struct {
@@ -10,14 +9,21 @@ type UserModule struct {
 }
 
 func NewUserModule() *UserModule {
-	userService := UserService{}
-	promotionService := promotion.PromotionService{}
-	userController := NewUserController(userService, promotionService)
-	return &UserModule{
-		userController: userController,
+	return &UserModule{}
+}
+
+func (m *UserModule) BasePath() gorix.BasePath {
+	return "/user"
+}
+
+func (m *UserModule) Providers() []any {
+	return []any{
+		NewUserService,
 	}
 }
 
-func (m *UserModule) GetUserController() (gorix.BasePath, UserController) {
-	return "/user", m.userController
+func (m *UserModule) Controllers() []any {
+	return []any{
+		NewUserController,
+	}
 }

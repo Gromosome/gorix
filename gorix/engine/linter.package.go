@@ -48,6 +48,11 @@ func ValidatePackageDirectory(dir string) error {
 				return err
 			}
 		}
+		if strings.HasSuffix(name, ".service.go") {
+			if err := validateServiceFile(fullPath); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
