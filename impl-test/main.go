@@ -13,7 +13,7 @@ import (
 func main() {
 	app := engine.NewApp()
 	app.Use(
-		hook.Apply(middlewares.AuthMiddleware()).Only("/user/*"),
+		hook.Apply(middlewares.AuthMiddleware()).Only("/promotion/*"),
 	)
 	app.UseInterceptors(
 		interceptor.NewAuditInterceptor(),

@@ -1,6 +1,10 @@
 package interceptor
 
-import "github.com/Gromosome/gorix/gorix"
+import (
+	"fmt"
+
+	"github.com/Gromosome/gorix/gorix"
+)
 
 type AuditInterceptor struct {
 }
@@ -10,6 +14,7 @@ func NewAuditInterceptor() *AuditInterceptor {
 }
 
 func (i *AuditInterceptor) Before(ctx *gorix.ExecutionContext) error {
+	fmt.Print("Reached..")
 	return nil
 }
 

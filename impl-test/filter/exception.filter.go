@@ -1,6 +1,10 @@
 package filter
 
-import "github.com/Gromosome/gorix/gorix"
+import (
+	"errors"
+
+	"github.com/Gromosome/gorix/gorix"
+)
 
 type ExceptionFilter struct {
 }
@@ -10,8 +14,16 @@ func NewExceptionFilter() *ExceptionFilter {
 }
 
 func (f *ExceptionFilter) Catch(ctx *gorix.ExceptionContext) {
-	_ = ctx.Context.Status(gorix.StatusBadRequest).JSON(map[string]any{
+	if validationErr, ok := errors.AsType[*gorix.ValidationError](ctx.Error); ok {
+		_ = ctx.Context.Status(gorix.StatusBadRequest).JSON(map[string]any{
+			"success": false,
+			"errors":  validationErr.Error(),
+		})
+		return
+	}
+
+	_ = ctx.Context.Status(ctx.StatusCode).JSON(map[string]any{
 		"success": false,
-		"error":   ctx.Error.Error(),
+		"message": ctx.Error.Error(),
 	})
 }

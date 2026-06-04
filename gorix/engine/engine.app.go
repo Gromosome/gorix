@@ -9,10 +9,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gromosome/gorix/gorix/config"
 	"github.com/Gromosome/gorix/gorix/core"
 	"github.com/Gromosome/gorix/gorix/di"
 	"github.com/Gromosome/gorix/gorix/hook"
 )
+
+type routeEntry struct {
+	Method      core.Method
+	Path        string
+	HandlerName string
+	Module      string
+	Controller  string
+	Handler     hook.Handler
+}
 
 type basePathModule interface {
 	BasePath() core.BasePath
@@ -26,12 +36,14 @@ type controllerModule interface {
 	Controllers() []any
 }
 type App struct {
-	mux          *http.ServeMux
 	routes       map[string]bool
 	routeInfos   []core.RouteInfo
-	projectRoot  string
-	config       core.Config
-	container    *di.Container
+	routeEntries []routeEntry
+
+	projectRoot string
+	config      config.Config
+	container   *di.Container
+
 	middlewares  []hook.MiddlewareConfig
 	interceptors []hook.InterceptorConfig
 	filters      []hook.FilterConfig
@@ -43,14 +55,16 @@ func NewApp() *App {
 	if err != nil {
 		wd = "."
 	}
-	config := core.LoadConfig(wd)
+	cfg := config.LoadConfig(wd)
 	return &App{
-		mux:          http.NewServeMux(),
 		routes:       make(map[string]bool),
 		routeInfos:   make([]core.RouteInfo, 0),
-		projectRoot:  wd,
-		config:       config,
-		container:    di.NewContainer(),
+		routeEntries: make([]routeEntry, 0),
+
+		projectRoot: wd,
+		config:      cfg,
+		container:   di.NewContainer(),
+
 		middlewares:  make([]hook.MiddlewareConfig, 0),
 		interceptors: make([]hook.InterceptorConfig, 0),
 		filters:      make([]hook.FilterConfig, 0),
@@ -154,7 +168,7 @@ func (a *App) TryListen(addr string) error {
 	}
 	a.PrintRoutes()
 	fmt.Println("Gorix server running on", addr)
-	return http.ListenAndServe(addr, a.mux)
+	return http.ListenAndServe(addr, http.HandlerFunc(a.dispatch))
 }
 
 func (a *App) registerModuleControllers(module any) error {
@@ -373,27 +387,133 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 		routeMiddlewares := a.resolveMiddlewares(fullPath)
 		finalHandler := hook.ChainMiddlewares(routeHandler, routeMiddlewares...)
 
-		a.mux.HandleFunc(fullPath, func(w http.ResponseWriter, r *http.Request) {
-			c := core.NewContext(w, r)
-
-			if err := finalHandler(c); err != nil {
-				a.handleException(&hook.ExceptionContext{
-					Context:    c,
-					Method:     httpMethod,
-					Path:       fullPath,
-					Module:     moduleName,
-					Controller: controllerName,
-					Handler:    methodInfo.Name,
-					Error:      err,
-					StatusCode: core.StatusInternalServerError,
-				})
-			}
+		a.routeEntries = append(a.routeEntries, routeEntry{
+			Method:      httpMethod,
+			Path:        fullPath,
+			HandlerName: methodInfo.Name,
+			Module:      moduleName,
+			Controller:  controllerName,
+			Handler:     finalHandler,
 		})
 	}
 
 	return nil
 }
+func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
+	requestPath := r.URL.Path
 
+	for _, route := range a.routeEntries {
+		matched, params := matchRoute(route.Path, requestPath)
+		if !matched {
+			continue
+		}
+
+		c := core.NewContext(w, r)
+		c.SetParams(params)
+
+		if r.Method != string(route.Method) {
+			a.handleException(&hook.ExceptionContext{
+				Context:    c,
+				Method:     route.Method,
+				Path:       route.Path,
+				Module:     route.Module,
+				Controller: route.Controller,
+				Handler:    route.HandlerName,
+				Error:      fmt.Errorf("method not allowed"),
+				StatusCode: core.StatusMethodNotAllowed,
+			})
+			return
+		}
+
+		if err := route.Handler(c); err != nil {
+			a.handleException(&hook.ExceptionContext{
+				Context:    c,
+				Method:     route.Method,
+				Path:       route.Path,
+				Module:     route.Module,
+				Controller: route.Controller,
+				Handler:    route.HandlerName,
+				Error:      err,
+				StatusCode: core.StatusInternalServerError,
+			})
+			return
+		}
+
+		return
+	}
+
+	c := core.NewContext(w, r)
+
+	a.handleException(&hook.ExceptionContext{
+		Context:    c,
+		Method:     core.Method(r.Method),
+		Path:       requestPath,
+		Error:      fmt.Errorf("route not found"),
+		StatusCode: core.StatusNotFound,
+	})
+}
+func matchRoute(pattern string, actualPath string) (bool, map[string]string) {
+	pattern = normalizeRoutePath(pattern)
+	actualPath = normalizeRoutePath(actualPath)
+
+	patternParts := splitRoutePath(pattern)
+	actualParts := splitRoutePath(actualPath)
+
+	if len(patternParts) != len(actualParts) {
+		return false, nil
+	}
+
+	params := make(map[string]string)
+
+	for i := range patternParts {
+		patternPart := patternParts[i]
+		actualPart := actualParts[i]
+
+		if strings.HasPrefix(patternPart, ":") {
+			key := strings.TrimPrefix(patternPart, ":")
+			params[key] = actualPart
+			continue
+		}
+
+		if patternPart != actualPart {
+			return false, nil
+		}
+	}
+
+	return true, params
+}
+
+func splitRoutePath(path string) []string {
+	path = normalizeRoutePath(path)
+
+	if path == "/" {
+		return []string{}
+	}
+
+	path = strings.Trim(path, "/")
+
+	if path == "" {
+		return []string{}
+	}
+
+	return strings.Split(path, "/")
+}
+
+func normalizeRoutePath(path string) string {
+	if path == "" {
+		return "/"
+	}
+
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	if len(path) > 1 {
+		path = strings.TrimRight(path, "/")
+	}
+
+	return path
+}
 func (a *App) handleException(ctx *hook.ExceptionContext) {
 	filters := a.resolveFilters(ctx.Path)
 

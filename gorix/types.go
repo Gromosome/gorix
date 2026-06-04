@@ -107,7 +107,11 @@ type MiddlewareConfig = hook.MiddlewareConfig
 type InterceptorConfig = hook.InterceptorConfig
 type FilterConfig = hook.FilterConfig
 type RouteHandler = core.RouteHandler
+type ValidationError = core.ValidationError
+type FieldError = core.FieldError
 
 var Apply = hook.Apply
 var ApplyInterceptor = hook.ApplyInterceptor
 var ApplyFilter = hook.ApplyFilter
+var NewValidationError = core.NewValidationError
+var NewFieldError = core.NewFieldError

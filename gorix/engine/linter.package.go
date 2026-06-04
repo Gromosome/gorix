@@ -36,20 +36,23 @@ func ValidatePackageDirectory(dir string) error {
 				return err
 			}
 		}
-
 		if strings.HasSuffix(name, ".interceptor.go") {
 			if err := validateInterceptorFile(fullPath); err != nil {
 				return err
 			}
 		}
-
-		if strings.HasSuffix(name, ".filter.go") {
+		if strings.HasSuffix(name, "filter.go") {
 			if err := validateFilterFile(fullPath); err != nil {
 				return err
 			}
 		}
 		if strings.HasSuffix(name, ".service.go") {
 			if err := validateServiceFile(fullPath); err != nil {
+				return err
+			}
+		}
+		if strings.HasSuffix(name, ".dto.go") {
+			if err := validateDTOFile(fullPath); err != nil {
 				return err
 			}
 		}

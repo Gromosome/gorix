@@ -454,6 +454,7 @@ func validateControllerReceiverReturn(fs *token.FileSet, path string, fn *ast.Fu
 
 	first := exprString(fn.Type.Results.List[0].Type)
 	second := exprString(fn.Type.Results.List[1].Type)
+	third := exprString(fn.Type.Results.List[2].Type)
 
 	if first != "gorix.Method" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
@@ -474,6 +475,17 @@ func validateControllerReceiverReturn(fs *token.FileSet, path string, fn *ast.Fu
 			line,
 			col,
 			fmt.Sprintf("controller method %s second return must be gorix.Path", fn.Name.Name),
+		)
+	}
+
+	if third != "gorix.RouteHandler" {
+		line, col := positionOf(fs, fn.Type.Results.List[2].Type)
+
+		return newValidationError(
+			path,
+			line,
+			col,
+			fmt.Sprintf("controller method %s third return must be gorix.RouteHandler", fn.Name.Name),
 		)
 	}
 

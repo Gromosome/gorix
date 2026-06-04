@@ -1,11 +1,9 @@
-package core
+package config
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/Gromosome/gorix/gorix/config"
 )
 
 type Config struct {
@@ -32,11 +30,11 @@ func LoadConfig(root string) Config {
 		return cfg
 	}
 
-	parsed := config.ParseYAML(string(data))
+	parsed := ParseYAML(string(data))
 
-	cfg.Gorix.App.Prod = config.GetBoolPtr(parsed, "gorix.app.prod")
-	cfg.Gorix.App.Host = config.GetString(parsed, "gorix.app.host", "0.0.0.0")
-	cfg.Gorix.App.Port = config.GetInt(parsed, "gorix.app.port", 8080)
+	cfg.Gorix.App.Prod = GetBoolPtr(parsed, "gorix.app.prod")
+	cfg.Gorix.App.Host = GetString(parsed, "gorix.app.host", "0.0.0.0")
+	cfg.Gorix.App.Port = GetInt(parsed, "gorix.app.port", 8080)
 
 	return cfg
 }
