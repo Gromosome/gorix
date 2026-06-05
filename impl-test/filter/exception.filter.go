@@ -17,7 +17,8 @@ func (f *ExceptionFilter) Catch(ctx *gorix.ExceptionContext) {
 	if validationErr, ok := errors.AsType[*gorix.ValidationError](ctx.Error); ok {
 		_ = ctx.Context.Status(gorix.StatusBadRequest).JSON(map[string]any{
 			"success": false,
-			"errors":  validationErr.Error(),
+			"message": validationErr.Error(),
+			"errors":  validationErr.ErrorAsList(),
 		})
 		return
 	}

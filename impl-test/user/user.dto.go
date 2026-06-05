@@ -12,5 +12,5 @@ type UserSearchQueryDto struct {
 	Sort  string `query:"sort" validate:"oneof=asc desc"`
 }
 type UserPathDto struct {
-	ID string `param:"id" validate:"required"`
+	ID int `param:"id" validate:"required"`
 }

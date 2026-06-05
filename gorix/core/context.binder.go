@@ -11,13 +11,24 @@ import (
 
 func (c *Context) BindBody(target any) error {
 	if target == nil {
-		return fmt.Errorf("gorix: BindBody target cannot be nil")
+		return NewValidationError([]FieldError{
+			NewFieldError("body", "bind", "body target cannot be nil"),
+		})
 	}
 
 	defer c.R.Body.Close()
 
-	if err := json.NewDecoder(c.R.Body).Decode(target); err != nil {
-		return err
+	decoder := json.NewDecoder(c.R.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(target); err != nil {
+		return NewValidationError([]FieldError{
+			NewFieldError(
+				"body",
+				"json",
+				fmt.Sprintf("invalid JSON body: %v", err),
+			),
+		})
 	}
 
 	return ValidateStruct(target)
@@ -25,12 +36,12 @@ func (c *Context) BindBody(target any) error {
 
 func (c *Context) BindQuery(target any) error {
 	if target == nil {
-		return fmt.Errorf("gorix: BindQuery target cannot be nil")
+		return NewValidationError([]FieldError{
+			NewFieldError("query", "bind", "query target cannot be nil"),
+		})
 	}
 
-	values := c.R.URL.Query()
-
-	if err := bindValues(target, values, "query"); err != nil {
+	if err := bindValues(target, c.R.URL.Query(), "query"); err != nil {
 		return err
 	}
 
@@ -39,7 +50,9 @@ func (c *Context) BindQuery(target any) error {
 
 func (c *Context) BindParams(target any) error {
 	if target == nil {
-		return fmt.Errorf("gorix: BindParams target cannot be nil")
+		return NewValidationError([]FieldError{
+			NewFieldError("params", "bind", "path parameter target cannot be nil"),
+		})
 	}
 
 	values := make(url.Values)
@@ -59,16 +72,29 @@ func bindValues(target any, values url.Values, tagName string) error {
 	targetValue := reflect.ValueOf(target)
 
 	if targetValue.Kind() != reflect.Pointer || targetValue.IsNil() {
-		return fmt.Errorf("gorix: bind target must be non-nil pointer")
+		return NewValidationError([]FieldError{
+			NewFieldError(
+				tagName,
+				"bind",
+				"bind target must be a non-nil pointer",
+			),
+		})
 	}
 
 	elem := targetValue.Elem()
 
 	if elem.Kind() != reflect.Struct {
-		return fmt.Errorf("gorix: bind target must point to struct")
+		return NewValidationError([]FieldError{
+			NewFieldError(
+				tagName,
+				"bind",
+				"bind target must point to a struct",
+			),
+		})
 	}
 
 	elemType := elem.Type()
+	fieldErrors := make([]FieldError, 0)
 
 	for i := 0; i < elem.NumField(); i++ {
 		field := elem.Field(i)
@@ -79,75 +105,58 @@ func bindValues(target any, values url.Values, tagName string) error {
 		}
 
 		key := fieldType.Tag.Get(tagName)
-		if key == "" || key == "-" {
-			key = fieldType.Name
-		}
-
-		raw := values.Get(key)
-		if raw == "" {
+		if key == "-" {
 			continue
 		}
 
-		if err := setFieldValue(field, raw); err != nil {
-			return fmt.Errorf("gorix: failed to bind %s field %s: %w", tagName, fieldType.Name, err)
+		if key == "" {
+			key = fieldType.Name
 		}
+
+		rawValues, exists := values[key]
+		if !exists || len(rawValues) == 0 {
+			continue
+		}
+
+		if err := setFieldValues(field, rawValues); err != nil {
+			fieldErrors = append(
+				fieldErrors,
+				NewBindFieldError(key, tagName, err),
+			)
+		}
+	}
+
+	if len(fieldErrors) > 0 {
+		return NewValidationError(fieldErrors)
 	}
 
 	return nil
 }
 
-func setFieldValue(field reflect.Value, raw string) error {
-	switch field.Kind() {
-	case reflect.String:
-		field.SetString(raw)
-		return nil
-
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		value, err := strconv.ParseInt(raw, 10, 64)
-		if err != nil {
-			return err
-		}
-		field.SetInt(value)
-		return nil
-
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		value, err := strconv.ParseUint(raw, 10, 64)
-		if err != nil {
-			return err
-		}
-		field.SetUint(value)
-		return nil
-
-	case reflect.Float32, reflect.Float64:
-		value, err := strconv.ParseFloat(raw, 64)
-		if err != nil {
-			return err
-		}
-		field.SetFloat(value)
-		return nil
-
-	case reflect.Bool:
-		value, err := strconv.ParseBool(raw)
-		if err != nil {
-			return err
-		}
-		field.SetBool(value)
-		return nil
-
-	case reflect.Slice:
-		return setSliceValue(field, raw)
-
-	default:
-		return fmt.Errorf("unsupported field type %s", field.Kind())
+func setFieldValues(field reflect.Value, rawValues []string) error {
+	if field.Kind() == reflect.Slice {
+		return setSliceValues(field, rawValues)
 	}
+
+	return setFieldValue(field, rawValues[0])
 }
 
-func setSliceValue(field reflect.Value, raw string) error {
-	parts := strings.Split(raw, ",")
+func setSliceValues(field reflect.Value, rawValues []string) error {
+	parts := make([]string, 0)
+
+	for _, raw := range rawValues {
+		for _, part := range strings.Split(raw, ",") {
+			part = strings.TrimSpace(part)
+
+			if part != "" {
+				parts = append(parts, part)
+			}
+		}
+	}
+
 	slice := reflect.MakeSlice(field.Type(), 0, len(parts))
 
 	for _, part := range parts {
-		part = strings.TrimSpace(part)
 		elem := reflect.New(field.Type().Elem()).Elem()
 
 		if err := setFieldValue(elem, part); err != nil {
@@ -158,5 +167,52 @@ func setSliceValue(field reflect.Value, raw string) error {
 	}
 
 	field.Set(slice)
+
 	return nil
+}
+func setFieldValue(field reflect.Value, raw string) error {
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(raw)
+		return nil
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		value, err := strconv.ParseInt(raw, 10, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("must be a valid integer")
+		}
+
+		field.SetInt(value)
+		return nil
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		value, err := strconv.ParseUint(raw, 10, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("must be a valid unsigned integer")
+		}
+
+		field.SetUint(value)
+		return nil
+
+	case reflect.Float32, reflect.Float64:
+		value, err := strconv.ParseFloat(raw, field.Type().Bits())
+		if err != nil {
+			return fmt.Errorf("must be a valid number")
+		}
+
+		field.SetFloat(value)
+		return nil
+
+	case reflect.Bool:
+		value, err := strconv.ParseBool(raw)
+		if err != nil {
+			return fmt.Errorf("must be true or false")
+		}
+
+		field.SetBool(value)
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported field type %s", field.Kind())
+	}
 }

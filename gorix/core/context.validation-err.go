@@ -43,3 +43,10 @@ func NewFieldError(field string, rule string, message string) FieldError {
 func RequiredError(field string) FieldError {
 	return NewFieldError(field, "required", fmt.Sprintf("%s is required", field))
 }
+func NewBindFieldError(field, source string, err error) FieldError {
+	return NewFieldError(
+		field,
+		source,
+		fmt.Sprintf("invalid %s value for %s: %v", source, field, err),
+	)
+}
