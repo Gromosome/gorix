@@ -1,4 +1,4 @@
-package core
+package context
 
 func (c *Context) SetParams(params map[string]string) {
 	c.params = params

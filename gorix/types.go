@@ -1,98 +1,98 @@
 package gorix
 
 import (
-	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/core/context"
 	"github.com/Gromosome/gorix/gorix/hook"
 )
 
-type Context = core.Context
-type StatusCode = core.StatusCode
+type Context = context.Context
+type StatusCode = context.StatusCode
 
-type Method = core.Method
-type Path = core.Path
-type BasePath = core.BasePath
-type RouteInfo = core.RouteInfo
+type Method = context.Method
+type Path = context.Path
+type BasePath = context.BasePath
+type RouteInfo = context.RouteInfo
 
 const (
-	GET    = core.GET
-	POST   = core.POST
-	PUT    = core.PUT
-	PATCH  = core.PATCH
-	DELETE = core.DELETE
+	GET    = context.GET
+	POST   = context.POST
+	PUT    = context.PUT
+	PATCH  = context.PATCH
+	DELETE = context.DELETE
 )
 
 const (
 	// 1xx Informational
-	StatusContinue           = core.StatusContinue
-	StatusSwitchingProtocols = core.StatusSwitchingProtocols
-	StatusProcessing         = core.StatusProcessing
-	StatusEarlyHints         = core.StatusEarlyHints
+	StatusContinue           = context.StatusContinue
+	StatusSwitchingProtocols = context.StatusSwitchingProtocols
+	StatusProcessing         = context.StatusProcessing
+	StatusEarlyHints         = context.StatusEarlyHints
 
 	// 2xx Success
-	StatusOK                   = core.StatusOK
-	StatusCreated              = core.StatusCreated
-	StatusAccepted             = core.StatusAccepted
-	StatusNonAuthoritativeInfo = core.StatusNonAuthoritativeInfo
-	StatusNoContent            = core.StatusNoContent
-	StatusResetContent         = core.StatusResetContent
-	StatusPartialContent       = core.StatusPartialContent
-	StatusMultiStatus          = core.StatusMultiStatus
-	StatusAlreadyReported      = core.StatusAlreadyReported
-	StatusIMUsed               = core.StatusIMUsed
+	StatusOK                   = context.StatusOK
+	StatusCreated              = context.StatusCreated
+	StatusAccepted             = context.StatusAccepted
+	StatusNonAuthoritativeInfo = context.StatusNonAuthoritativeInfo
+	StatusNoContent            = context.StatusNoContent
+	StatusResetContent         = context.StatusResetContent
+	StatusPartialContent       = context.StatusPartialContent
+	StatusMultiStatus          = context.StatusMultiStatus
+	StatusAlreadyReported      = context.StatusAlreadyReported
+	StatusIMUsed               = context.StatusIMUsed
 
 	// 3xx Redirection
-	StatusMultipleChoices   = core.StatusMultipleChoices
-	StatusMovedPermanently  = core.StatusMovedPermanently
-	StatusFound             = core.StatusFound
-	StatusSeeOther          = core.StatusSeeOther
-	StatusNotModified       = core.StatusNotModified
-	StatusUseProxy          = core.StatusUseProxy
-	StatusTemporaryRedirect = core.StatusTemporaryRedirect
-	StatusPermanentRedirect = core.StatusPermanentRedirect
+	StatusMultipleChoices   = context.StatusMultipleChoices
+	StatusMovedPermanently  = context.StatusMovedPermanently
+	StatusFound             = context.StatusFound
+	StatusSeeOther          = context.StatusSeeOther
+	StatusNotModified       = context.StatusNotModified
+	StatusUseProxy          = context.StatusUseProxy
+	StatusTemporaryRedirect = context.StatusTemporaryRedirect
+	StatusPermanentRedirect = context.StatusPermanentRedirect
 
 	// 4xx Client Error
-	StatusBadRequest                   = core.StatusBadRequest
-	StatusUnauthorized                 = core.StatusUnauthorized
-	StatusPaymentRequired              = core.StatusPaymentRequired
-	StatusForbidden                    = core.StatusForbidden
-	StatusNotFound                     = core.StatusNotFound
-	StatusMethodNotAllowed             = core.StatusMethodNotAllowed
-	StatusNotAcceptable                = core.StatusNotAcceptable
-	StatusProxyAuthRequired            = core.StatusProxyAuthRequired
-	StatusRequestTimeout               = core.StatusRequestTimeout
-	StatusConflict                     = core.StatusConflict
-	StatusGone                         = core.StatusGone
-	StatusLengthRequired               = core.StatusLengthRequired
-	StatusPreconditionFailed           = core.StatusPreconditionFailed
-	StatusRequestEntityTooLarge        = core.StatusRequestEntityTooLarge
-	StatusRequestURITooLong            = core.StatusRequestURITooLong
-	StatusUnsupportedMediaType         = core.StatusUnsupportedMediaType
-	StatusRequestedRangeNotSatisfiable = core.StatusRequestedRangeNotSatisfiable
-	StatusExpectationFailed            = core.StatusExpectationFailed
-	StatusTeapot                       = core.StatusTeapot
-	StatusMisdirectedRequest           = core.StatusMisdirectedRequest
-	StatusUnprocessableEntity          = core.StatusUnprocessableEntity
-	StatusLocked                       = core.StatusLocked
-	StatusFailedDependency             = core.StatusFailedDependency
-	StatusTooEarly                     = core.StatusTooEarly
-	StatusUpgradeRequired              = core.StatusUpgradeRequired
-	StatusPreconditionRequired         = core.StatusPreconditionRequired
-	StatusTooManyRequests              = core.StatusTooManyRequests
-	StatusRequestHeaderFieldsTooLarge  = core.StatusRequestHeaderFieldsTooLarge
-	StatusUnavailableForLegalReasons   = core.StatusUnavailableForLegalReasons
+	StatusBadRequest                   = context.StatusBadRequest
+	StatusUnauthorized                 = context.StatusUnauthorized
+	StatusPaymentRequired              = context.StatusPaymentRequired
+	StatusForbidden                    = context.StatusForbidden
+	StatusNotFound                     = context.StatusNotFound
+	StatusMethodNotAllowed             = context.StatusMethodNotAllowed
+	StatusNotAcceptable                = context.StatusNotAcceptable
+	StatusProxyAuthRequired            = context.StatusProxyAuthRequired
+	StatusRequestTimeout               = context.StatusRequestTimeout
+	StatusConflict                     = context.StatusConflict
+	StatusGone                         = context.StatusGone
+	StatusLengthRequired               = context.StatusLengthRequired
+	StatusPreconditionFailed           = context.StatusPreconditionFailed
+	StatusRequestEntityTooLarge        = context.StatusRequestEntityTooLarge
+	StatusRequestURITooLong            = context.StatusRequestURITooLong
+	StatusUnsupportedMediaType         = context.StatusUnsupportedMediaType
+	StatusRequestedRangeNotSatisfiable = context.StatusRequestedRangeNotSatisfiable
+	StatusExpectationFailed            = context.StatusExpectationFailed
+	StatusTeapot                       = context.StatusTeapot
+	StatusMisdirectedRequest           = context.StatusMisdirectedRequest
+	StatusUnprocessableEntity          = context.StatusUnprocessableEntity
+	StatusLocked                       = context.StatusLocked
+	StatusFailedDependency             = context.StatusFailedDependency
+	StatusTooEarly                     = context.StatusTooEarly
+	StatusUpgradeRequired              = context.StatusUpgradeRequired
+	StatusPreconditionRequired         = context.StatusPreconditionRequired
+	StatusTooManyRequests              = context.StatusTooManyRequests
+	StatusRequestHeaderFieldsTooLarge  = context.StatusRequestHeaderFieldsTooLarge
+	StatusUnavailableForLegalReasons   = context.StatusUnavailableForLegalReasons
 
 	// 5xx Server Error
-	StatusInternalServerError           = core.StatusInternalServerError
-	StatusNotImplemented                = core.StatusNotImplemented
-	StatusBadGateway                    = core.StatusBadGateway
-	StatusServiceUnavailable            = core.StatusServiceUnavailable
-	StatusGatewayTimeout                = core.StatusGatewayTimeout
-	StatusHTTPVersionNotSupported       = core.StatusHTTPVersionNotSupported
-	StatusVariantAlsoNegotiates         = core.StatusVariantAlsoNegotiates
-	StatusInsufficientStorage           = core.StatusInsufficientStorage
-	StatusLoopDetected                  = core.StatusLoopDetected
-	StatusNotExtended                   = core.StatusNotExtended
-	StatusNetworkAuthenticationRequired = core.StatusNetworkAuthenticationRequired
+	StatusInternalServerError           = context.StatusInternalServerError
+	StatusNotImplemented                = context.StatusNotImplemented
+	StatusBadGateway                    = context.StatusBadGateway
+	StatusServiceUnavailable            = context.StatusServiceUnavailable
+	StatusGatewayTimeout                = context.StatusGatewayTimeout
+	StatusHTTPVersionNotSupported       = context.StatusHTTPVersionNotSupported
+	StatusVariantAlsoNegotiates         = context.StatusVariantAlsoNegotiates
+	StatusInsufficientStorage           = context.StatusInsufficientStorage
+	StatusLoopDetected                  = context.StatusLoopDetected
+	StatusNotExtended                   = context.StatusNotExtended
+	StatusNetworkAuthenticationRequired = context.StatusNetworkAuthenticationRequired
 )
 
 type Handler = hook.Handler
@@ -106,12 +106,12 @@ type ExceptionContext = hook.ExceptionContext
 type MiddlewareConfig = hook.MiddlewareConfig
 type InterceptorConfig = hook.InterceptorConfig
 type FilterConfig = hook.FilterConfig
-type RouteHandler = core.RouteHandler
-type ValidationError = core.ValidationError
-type FieldError = core.FieldError
+type RouteHandler = context.RouteHandler
+type ValidationError = context.ValidationError
+type FieldError = context.FieldError
 
 var Apply = hook.Apply
 var ApplyInterceptor = hook.ApplyInterceptor
 var ApplyFilter = hook.ApplyFilter
-var NewValidationError = core.NewValidationError
-var NewFieldError = core.NewFieldError
+var NewValidationError = context.NewValidationError
+var NewFieldError = context.NewFieldError

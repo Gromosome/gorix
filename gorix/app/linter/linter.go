@@ -1,5 +1,5 @@
-// Package engine provides whole framework layer
-package engine
+// Package app provides whole framework layer
+package linter
 
 import (
 	"os"

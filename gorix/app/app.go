@@ -1,4 +1,4 @@
-package engine
+package app
 
 import (
 	"fmt"
@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Gromosome/gorix/gorix/app/linter"
 	"github.com/Gromosome/gorix/gorix/config"
-	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/core/context"
 	"github.com/Gromosome/gorix/gorix/di"
 	"github.com/Gromosome/gorix/gorix/hook"
 )
 
 type routeEntry struct {
-	Method      core.Method
+	Method      context.Method
 	Path        string
 	HandlerName string
 	Module      string
@@ -25,7 +26,7 @@ type routeEntry struct {
 }
 
 type basePathModule interface {
-	BasePath() core.BasePath
+	BasePath() context.BasePath
 }
 
 type providerModule interface {
@@ -37,7 +38,7 @@ type controllerModule interface {
 }
 type App struct {
 	routes       map[string]bool
-	routeInfos   []core.RouteInfo
+	routeInfos   []context.RouteInfo
 	routeEntries []routeEntry
 
 	projectRoot string
@@ -58,7 +59,7 @@ func NewApp() *App {
 	cfg := config.LoadConfig(wd)
 	return &App{
 		routes:       make(map[string]bool),
-		routeInfos:   make([]core.RouteInfo, 0),
+		routeInfos:   make([]context.RouteInfo, 0),
 		routeEntries: make([]routeEntry, 0),
 
 		projectRoot: wd,
@@ -159,7 +160,7 @@ func (a *App) TryRegisterModules(modules ...any) error {
 
 func (a *App) TryListen(addr string) error {
 	if !a.config.IsProd() {
-		if err := ValidateProject(a.projectRoot); err != nil {
+		if err := linter.ValidateProject(a.projectRoot); err != nil {
 			return err
 		}
 		fmt.Println("Gorix validation passed")
@@ -243,7 +244,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 
 		startupOut := method.Call(nil)
 
-		httpMethod, ok := startupOut[0].Interface().(core.Method)
+		httpMethod, ok := startupOut[0].Interface().(context.Method)
 		if !ok {
 			return fmt.Errorf(
 				"gorix: controller method %s first return value must be gorix.Method",
@@ -251,7 +252,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			)
 		}
 
-		path, ok := startupOut[1].Interface().(core.Path)
+		path, ok := startupOut[1].Interface().(context.Path)
 		if !ok {
 			return fmt.Errorf(
 				"gorix: controller method %s second return value must be gorix.Path",
@@ -259,7 +260,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			)
 		}
 
-		routeAction, ok := startupOut[2].Interface().(core.RouteHandler)
+		routeAction, ok := startupOut[2].Interface().(context.RouteHandler)
 		if !ok {
 			return fmt.Errorf(
 				"gorix: controller method %s third return value must be gorix.RouteHandler",
@@ -276,7 +277,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 
 		a.routes[routeKey] = true
 
-		a.routeInfos = append(a.routeInfos, core.RouteInfo{
+		a.routeInfos = append(a.routeInfos, context.RouteInfo{
 			Method:     httpMethod,
 			Path:       fullPath,
 			Handler:    methodInfo.Name,
@@ -286,7 +287,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 
 		routeInterceptors := a.resolveInterceptors(fullPath)
 
-		routeHandler := func(c *core.Context) error {
+		routeHandler := func(c *context.Context) error {
 			if c.R.Method != string(httpMethod) {
 				a.handleException(&hook.ExceptionContext{
 					Context:    c,
@@ -296,7 +297,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 					Controller: controllerName,
 					Handler:    methodInfo.Name,
 					Error:      fmt.Errorf("method not allowed"),
-					StatusCode: core.StatusMethodNotAllowed,
+					StatusCode: context.StatusMethodNotAllowed,
 				})
 				return nil
 			}
@@ -321,7 +322,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 						Controller: controllerName,
 						Handler:    methodInfo.Name,
 						Error:      fmt.Errorf("%v", rec),
-						StatusCode: core.StatusInternalServerError,
+						StatusCode: context.StatusInternalServerError,
 					})
 				}
 			}()
@@ -338,7 +339,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 						Controller: controllerName,
 						Handler:    methodInfo.Name,
 						Error:      err,
-						StatusCode: core.StatusInternalServerError,
+						StatusCode: context.StatusInternalServerError,
 					})
 					return nil
 				}
@@ -356,7 +357,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 					Controller: controllerName,
 					Handler:    methodInfo.Name,
 					Error:      err,
-					StatusCode: core.StatusInternalServerError,
+					StatusCode: context.StatusInternalServerError,
 				})
 				return nil
 			}
@@ -375,13 +376,13 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 						Controller: controllerName,
 						Handler:    methodInfo.Name,
 						Error:      err,
-						StatusCode: core.StatusInternalServerError,
+						StatusCode: context.StatusInternalServerError,
 					})
 					return nil
 				}
 			}
 
-			return c.Status(core.StatusOK).JSON(execCtx.Response)
+			return c.Status(context.StatusOK).JSON(execCtx.Response)
 		}
 
 		routeMiddlewares := a.resolveMiddlewares(fullPath)
@@ -408,7 +409,7 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		c := core.NewContext(w, r)
+		c := context.NewContext(w, r)
 		c.SetParams(params)
 
 		if r.Method != string(route.Method) {
@@ -420,7 +421,7 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 				Controller: route.Controller,
 				Handler:    route.HandlerName,
 				Error:      fmt.Errorf("method not allowed"),
-				StatusCode: core.StatusMethodNotAllowed,
+				StatusCode: context.StatusMethodNotAllowed,
 			})
 			return
 		}
@@ -434,7 +435,7 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 				Controller: route.Controller,
 				Handler:    route.HandlerName,
 				Error:      err,
-				StatusCode: core.StatusInternalServerError,
+				StatusCode: context.StatusInternalServerError,
 			})
 			return
 		}
@@ -442,14 +443,14 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := core.NewContext(w, r)
+	c := context.NewContext(w, r)
 
 	a.handleException(&hook.ExceptionContext{
 		Context:    c,
-		Method:     core.Method(r.Method),
+		Method:     context.Method(r.Method),
 		Path:       requestPath,
 		Error:      fmt.Errorf("route not found"),
-		StatusCode: core.StatusNotFound,
+		StatusCode: context.StatusNotFound,
 	})
 }
 func matchRoute(pattern string, actualPath string) (bool, map[string]string) {

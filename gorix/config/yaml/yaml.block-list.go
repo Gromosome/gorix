@@ -1,6 +1,8 @@
-package config
+package yaml
 
-import "strings"
+import (
+	"strings"
+)
 
 func detectNextBlockType(lines []string, start int, parentIndent int) string {
 	for j := start; j < len(lines); j++ {

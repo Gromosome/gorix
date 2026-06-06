@@ -1,9 +1,9 @@
 package gorix
 
-import "github.com/Gromosome/gorix/gorix/engine"
+import "github.com/Gromosome/gorix/gorix/app"
 
-type App = engine.App
+type App = app.App
 
 func NewApp() *App {
-	return engine.NewApp()
+	return app.NewApp()
 }

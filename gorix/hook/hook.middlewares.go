@@ -1,10 +1,10 @@
 package hook
 
 import (
-	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
-type Handler func(c *core.Context) error
+type Handler func(c *context.Context) error
 
 type Middleware func(handler Handler) Handler
 

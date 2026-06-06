@@ -3,13 +3,13 @@ package hook
 import (
 	"time"
 
-	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
 type ExecutionContext struct {
-	Context *core.Context
+	Context *context.Context
 
-	Method core.Method
+	Method context.Method
 	Path   string
 
 	Module     string

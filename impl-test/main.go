@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/Gromosome/gorix/gorix/engine"
-	"github.com/Gromosome/gorix/gorix/hook"
+	"github.com/Gromosome/gorix/gorix"
 	"github.com/Gromosome/gorix/impl-test/filter"
 	"github.com/Gromosome/gorix/impl-test/interceptor"
 	middlewares "github.com/Gromosome/gorix/impl-test/middleware"
@@ -11,9 +10,9 @@ import (
 )
 
 func main() {
-	app := engine.NewApp()
+	app := gorix.NewApp()
 	app.Use(
-		hook.Apply(middlewares.AuthMiddleware()).Only("/promotion/*"),
+		gorix.Apply(middlewares.AuthMiddleware()).Only("/promotion/*"),
 	)
 	app.UseInterceptors(
 		interceptor.NewAuditInterceptor(),

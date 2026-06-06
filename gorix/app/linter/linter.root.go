@@ -1,5 +1,5 @@
 // Package validate provides validation layer of gorix framework
-package engine
+package linter
 
 import (
 	"fmt"

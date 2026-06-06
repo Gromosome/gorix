@@ -36,7 +36,7 @@ func (c *UserController) CreateUser() (gorix.Method, gorix.Path, gorix.RouteHand
 			return nil, err
 		}
 
-		return body, nil
+		return c.userService.CreateUser(body), nil
 	}
 }
 

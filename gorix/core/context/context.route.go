@@ -1,4 +1,4 @@
-package core
+package context
 
 type Method string
 type Path string

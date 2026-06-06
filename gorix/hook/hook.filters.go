@@ -1,18 +1,18 @@
 package hook
 
 import (
-	"github.com/Gromosome/gorix/gorix/core"
+	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
 type ExceptionContext struct {
-	Context    *core.Context
-	Method     core.Method
+	Context    *context.Context
+	Method     context.Method
 	Path       string
 	Module     string
 	Controller string
 	Handler    string
 	Error      error
-	StatusCode core.StatusCode
+	StatusCode context.StatusCode
 }
 
 type Filter interface {
