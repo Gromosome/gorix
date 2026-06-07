@@ -128,3 +128,33 @@ func (c *Container) Build(constructor any) (reflect.Value, error) {
 
 	return result, nil
 }
+
+func (c *Container) RegisterInstance(
+	instance any,
+) error {
+	if instance == nil {
+		return fmt.Errorf(
+			"gorix di: instance cannot be nil",
+		)
+	}
+
+	value := reflect.ValueOf(instance)
+	instanceType := value.Type()
+
+	if _, exists := c.instances[instanceType]; exists {
+		return fmt.Errorf(
+			"gorix di: duplicate instance registered for %s",
+			instanceType,
+		)
+	}
+
+	if _, exists := c.providers[instanceType]; exists {
+		return fmt.Errorf(
+			"gorix di: provider already registered for %s",
+			instanceType,
+		)
+	}
+
+	c.instances[instanceType] = value
+	return nil
+}

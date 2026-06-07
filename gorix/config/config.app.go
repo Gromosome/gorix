@@ -13,7 +13,8 @@ type Config struct {
 }
 
 type GorixConfig struct {
-	App AppConfig
+	App       AppConfig
+	Databases map[string]DatabaseConfig
 }
 
 type AppConfig struct {
