@@ -1,12 +1,13 @@
 package app
 
 import (
-	"context"
 	"fmt"
+
+	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
 func (a *App) connectDatabases(
-	ctx context.Context,
+	ctx *context.Context,
 ) error {
 	configs, err := a.config.DatabaseConfigs()
 	if err != nil {

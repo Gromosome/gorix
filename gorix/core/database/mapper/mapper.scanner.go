@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 )
 
-type RowsScanner interface {
+type RowScanner interface {
 	Columns() ([]string, error)
 	Scan(dest ...any) error
 }
@@ -15,10 +16,126 @@ type structMetadata struct {
 	fields map[string][]int
 }
 
-func buildStructMetadata(structType reflect.Type) structMetadata {
+var structMetadataCache sync.Map
+
+func ScanInto(
+	row RowScanner,
+	target any,
+) error {
+	if row == nil {
+		return fmt.Errorf(
+			"gorix mapper: row scanner cannot be nil",
+		)
+	}
+
+	if target == nil {
+		return fmt.Errorf(
+			"gorix mapper: scan target cannot be nil",
+		)
+	}
+
+	targetValue := reflect.ValueOf(target)
+
+	if targetValue.Kind() != reflect.Pointer ||
+		targetValue.IsNil() {
+		return fmt.Errorf(
+			"gorix mapper: scan target must be a non-nil pointer",
+		)
+	}
+
+	structValue := targetValue.Elem()
+
+	if structValue.Kind() != reflect.Struct {
+		return fmt.Errorf(
+			"gorix mapper: scan target must point to a struct, got %s",
+			structValue.Kind(),
+		)
+	}
+
+	columns, err := row.Columns()
+	if err != nil {
+		return fmt.Errorf(
+			"gorix mapper: failed to read result columns: %w",
+			err,
+		)
+	}
+
+	metadata := getStructMetadata(
+		structValue.Type(),
+	)
+
+	destinations := make([]any, len(columns))
+
+	for index, column := range columns {
+		columnKey := normalizeColumnName(column)
+
+		fieldIndex, exists := metadata.fields[columnKey]
+		if !exists {
+			var ignored any
+			destinations[index] = &ignored
+			continue
+		}
+
+		field, err := resolveWritableField(
+			structValue,
+			fieldIndex,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"gorix mapper: failed to resolve column %q: %w",
+				column,
+				err,
+			)
+		}
+
+		if !field.CanAddr() {
+			var ignored any
+			destinations[index] = &ignored
+			continue
+		}
+
+		destinations[index] = field.Addr().Interface()
+	}
+
+	if err := row.Scan(destinations...); err != nil {
+		return fmt.Errorf(
+			"gorix mapper: failed to scan row: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func getStructMetadata(
+	structType reflect.Type,
+) structMetadata {
+	if cached, exists := structMetadataCache.Load(
+		structType,
+	); exists {
+		return cached.(structMetadata)
+	}
+
+	metadata := buildStructMetadata(structType)
+
+	structMetadataCache.Store(
+		structType,
+		metadata,
+	)
+
+	return metadata
+}
+
+func buildStructMetadata(
+	structType reflect.Type,
+) structMetadata {
 	fields := make(map[string][]int)
 
-	collectStructFields(structType, nil, fields)
+	collectStructFields(
+		structType,
+		nil,
+		fields,
+	)
 
 	return structMetadata{
 		fields: fields,
@@ -30,16 +147,16 @@ func collectStructFields(
 	parentIndex []int,
 	fields map[string][]int,
 ) {
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
+	for index := 0; index < structType.NumField(); index++ {
+		field := structType.Field(index)
 
 		if !field.IsExported() {
 			continue
 		}
 
-		index := append(
+		fieldIndex := append(
 			append([]int(nil), parentIndex...),
-			i,
+			index,
 		)
 
 		fieldType := field.Type
@@ -50,12 +167,17 @@ func collectStructFields(
 			}
 
 			if fieldType.Kind() == reflect.Struct {
-				collectStructFields(fieldType, index, fields)
+				collectStructFields(
+					fieldType,
+					fieldIndex,
+					fields,
+				)
 				continue
 			}
 		}
 
 		columnName := field.Tag.Get("db")
+
 		if columnName == "-" {
 			continue
 		}
@@ -64,60 +186,82 @@ func collectStructFields(
 			columnName = toSnakeCase(field.Name)
 		}
 
-		fields[strings.ToLower(columnName)] = index
+		fields[normalizeColumnName(columnName)] = fieldIndex
 	}
 }
 
-func ScanStruct[T any](row RowsScanner) (T, error) {
-	var result T
+func resolveWritableField(
+	root reflect.Value,
+	indexPath []int,
+) (reflect.Value, error) {
+	current := root
 
-	value := reflect.ValueOf(&result).Elem()
-	if value.Kind() != reflect.Struct {
-		return result, fmt.Errorf(
-			"gorix mapper: target type must be a struct, got %s",
-			value.Kind(),
-		)
-	}
+	for position, fieldIndex := range indexPath {
+		if current.Kind() == reflect.Pointer {
+			if current.IsNil() {
+				if !current.CanSet() {
+					return reflect.Value{}, fmt.Errorf(
+						"pointer field cannot be initialized",
+					)
+				}
 
-	columns, err := row.Columns()
-	if err != nil {
-		return result, fmt.Errorf(
-			"gorix mapper: failed to read columns: %w",
-			err,
-		)
-	}
+				current.Set(
+					reflect.New(current.Type().Elem()),
+				)
+			}
 
-	metadata := buildStructMetadata(value.Type())
-	destinations := make([]any, len(columns))
-
-	for i, column := range columns {
-		index, found := metadata.fields[strings.ToLower(column)]
-
-		if !found {
-			var ignored any
-			destinations[i] = &ignored
-			continue
+			current = current.Elem()
 		}
 
-		field := value.FieldByIndex(index)
-
-		if !field.CanAddr() {
-			var ignored any
-			destinations[i] = &ignored
-			continue
+		if current.Kind() != reflect.Struct {
+			return reflect.Value{}, fmt.Errorf(
+				"expected struct while resolving field path, got %s",
+				current.Kind(),
+			)
 		}
 
-		destinations[i] = field.Addr().Interface()
+		field := current.Field(fieldIndex)
+
+		if position == len(indexPath)-1 {
+			if !field.CanSet() {
+				return reflect.Value{}, fmt.Errorf(
+					"field cannot be set",
+				)
+			}
+
+			return field, nil
+		}
+
+		if field.Kind() == reflect.Pointer {
+			if field.IsNil() {
+				if !field.CanSet() {
+					return reflect.Value{}, fmt.Errorf(
+						"nested pointer field cannot be initialized",
+					)
+				}
+
+				field.Set(
+					reflect.New(field.Type().Elem()),
+				)
+			}
+
+			field = field.Elem()
+		}
+
+		current = field
 	}
 
-	if err := row.Scan(destinations...); err != nil {
-		return result, fmt.Errorf(
-			"gorix mapper: failed to scan row: %w",
-			err,
-		)
-	}
+	return reflect.Value{}, fmt.Errorf(
+		"invalid field index path",
+	)
+}
 
-	return result, nil
+func normalizeColumnName(
+	value string,
+) string {
+	return strings.ToLower(
+		strings.TrimSpace(value),
+	)
 }
 
 func toSnakeCase(value string) string {
@@ -126,19 +270,39 @@ func toSnakeCase(value string) string {
 	}
 
 	var builder strings.Builder
+	runes := []rune(value)
 
-	for i, character := range value {
-		if character >= 'A' && character <= 'Z' {
-			if i > 0 {
-				builder.WriteByte('_')
-			}
-
-			builder.WriteRune(character + ('a' - 'A'))
-			continue
+	for index, current := range runes {
+		if index > 0 &&
+			isUpper(current) &&
+			(isLower(runes[index-1]) ||
+				isDigit(runes[index-1]) ||
+				index+1 < len(runes) && isLower(runes[index+1])) {
+			builder.WriteRune('_')
 		}
 
-		builder.WriteRune(character)
+		builder.WriteRune(toLower(current))
 	}
 
 	return builder.String()
+}
+
+func isUpper(value rune) bool {
+	return value >= 'A' && value <= 'Z'
+}
+
+func isLower(value rune) bool {
+	return value >= 'a' && value <= 'z'
+}
+
+func isDigit(value rune) bool {
+	return value >= '0' && value <= '9'
+}
+
+func toLower(value rune) rune {
+	if isUpper(value) {
+		return value + ('a' - 'A')
+	}
+
+	return value
 }

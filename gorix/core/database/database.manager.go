@@ -1,11 +1,11 @@
 package database
 
 import (
-	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"sync"
+
+	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
 
 type Manager struct {
@@ -19,7 +19,7 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) Connect(ctx context.Context, config Config) error {
+func (m *Manager) Connect(ctx *gorixcontext.Context, config Config) error {
 	config = config.Normalize()
 
 	connection, err := Open(ctx, config)
@@ -64,7 +64,9 @@ func (m *Manager) Connection(names ...string) (*Connection, error) {
 	return connection, nil
 }
 
-func (m *Manager) DB(names ...string) (*sql.DB, error) {
+func (m *Manager) DB(
+	names ...string,
+) (*DB, error) {
 	connection, err := m.Connection(names...)
 	if err != nil {
 		return nil, err
@@ -73,7 +75,7 @@ func (m *Manager) DB(names ...string) (*sql.DB, error) {
 	return connection.DB(), nil
 }
 
-func (m *Manager) MustDB(names ...string) *sql.DB {
+func (m *Manager) MustDB(names ...string) *DB {
 	db, err := m.DB(names...)
 	if err != nil {
 		panic(err)

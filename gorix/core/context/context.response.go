@@ -10,23 +10,8 @@ import (
 	"os"
 )
 
-type Context struct {
-	W      http.ResponseWriter
-	R      *http.Request
-	status StatusCode
-	params map[string]string
-}
-
-func NewContext(w http.ResponseWriter, r *http.Request) *Context {
-	return &Context{
-		W:      w,
-		R:      r,
-		params: make(map[string]string),
-	}
-}
-
 func (c *Context) getStatus() int {
-	if c.status == 0 {
+	if c == nil || c.status == 0 {
 		return StatusOK.Int()
 	}
 	return c.status.Int()
@@ -38,23 +23,40 @@ func (c *Context) Status(status StatusCode) *Context {
 }
 
 func (c *Context) Header(key, value string) *Context {
-	c.W.Header().Set(key, value)
+	if c != nil && c.W != nil {
+		c.W.Header().Set(key, value)
+	}
 	return c
 }
 
 func (c *Context) JSON(data any) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", "application/json")
 	c.W.WriteHeader(c.getStatus())
 	return json.NewEncoder(c.W).Encode(data)
 }
 
 func (c *Context) XML(data any) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	c.W.WriteHeader(c.getStatus())
 	return xml.NewEncoder(c.W).Encode(data)
 }
 
 func (c *Context) Text(data string) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	c.W.WriteHeader(c.getStatus())
 	_, err := c.W.Write([]byte(data))
@@ -62,6 +64,11 @@ func (c *Context) Text(data string) error {
 }
 
 func (c *Context) HTML(data string) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.W.WriteHeader(c.getStatus())
 	_, err := c.W.Write([]byte(data))
@@ -69,6 +76,11 @@ func (c *Context) HTML(data string) error {
 }
 
 func (c *Context) Template(tpl string, data any) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
 	c.W.WriteHeader(c.getStatus())
 
@@ -81,12 +93,22 @@ func (c *Context) Template(tpl string, data any) error {
 }
 
 func (c *Context) Blob(contentType string, data []byte) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", contentType)
 	c.W.WriteHeader(c.getStatus())
 	_, err := c.W.Write(data)
 	return err
 }
 func (c *Context) serveLocalFile(filepath string, filename string, download bool) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	file, err := os.Open(filepath)
 	if err != nil {
 		http.Error(c.W, "file not found", http.StatusNotFound)
@@ -127,6 +149,11 @@ func (c *Context) Download(filepath string, filename string) error {
 
 // Stream : stream data from reader with specified content type
 func (c *Context) Stream(contentType string, reader io.Reader) error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.Header().Set("Content-Type", contentType)
 	c.W.WriteHeader(c.getStatus())
 	if _, err := io.Copy(c.W, reader); err != nil {
@@ -136,10 +163,22 @@ func (c *Context) Stream(contentType string, reader io.Reader) error {
 }
 
 // Redirect :send browser to signed S3 URL
-func (c *Context) Redirect(url string) {
+func (c *Context) Redirect(url string) error {
+	if c == nil || c.W == nil || c.R == nil {
+		return fmt.Errorf(
+			"gorix context: response writer or request is unavailable",
+		)
+	}
 	http.Redirect(c.W, c.R, url, c.getStatus())
+	return nil
 }
 
-func (c *Context) NoContent() {
+func (c *Context) NoContent() error {
+	if c == nil || c.W == nil {
+		return fmt.Errorf(
+			"gorix context: response writer is unavailable",
+		)
+	}
 	c.W.WriteHeader(c.getStatus())
+	return nil
 }

@@ -1,7 +1,6 @@
 package app
 
 import (
-	Context "context"
 	"fmt"
 	"log"
 	"net/http"
@@ -181,8 +180,8 @@ func (a *App) TryListen(addr string) error {
 		fmt.Println("Gorix validation passed")
 	}
 
-	startupContext, cancel := Context.WithTimeout(
-		Context.Background(),
+	startupContext, cancel := context.WithTimeout(
+		context.Background(),
 		15*time.Second,
 	)
 	defer cancel()

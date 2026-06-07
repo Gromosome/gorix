@@ -1,29 +1,42 @@
 package database
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
+
+	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
 
 type Connection struct {
 	name   string
 	driver string
-	db     *sql.DB
+	db     *DB
 }
 
-func Open(ctx context.Context, config Config) (*Connection, error) {
+func Open(
+	ctx *gorixcontext.Context,
+	config Config,
+) (*Connection, error) {
 	config = config.Normalize()
 
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
+	if ctx == nil {
+		return nil, fmt.Errorf(
+			"gorix database: context cannot be nil",
+		)
+	}
+
 	if err := validateDriver(config.Driver); err != nil {
 		return nil, err
 	}
 
-	db, err := sql.Open(config.Driver, config.DSN)
+	nativeDB, err := sql.Open(
+		config.Driver,
+		config.DSN,
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"gorix database: failed to open connection %q using driver %q: %w",
@@ -33,19 +46,31 @@ func Open(ctx context.Context, config Config) (*Connection, error) {
 		)
 	}
 
-	db.SetMaxOpenConns(config.MaxOpenConnections)
-	db.SetMaxIdleConns(config.MaxIdleConnections)
+	nativeDB.SetMaxOpenConns(
+		config.MaxOpenConnections,
+	)
+	nativeDB.SetMaxIdleConns(
+		config.MaxIdleConnections,
+	)
 
 	if config.ConnectionMaxLifetime > 0 {
-		db.SetConnMaxLifetime(config.ConnectionMaxLifetime)
+		nativeDB.SetConnMaxLifetime(
+			config.ConnectionMaxLifetime,
+		)
 	}
 
 	if config.ConnectionMaxIdleTime > 0 {
-		db.SetConnMaxIdleTime(config.ConnectionMaxIdleTime)
+		nativeDB.SetConnMaxIdleTime(
+			config.ConnectionMaxIdleTime,
+		)
 	}
 
-	if err := db.PingContext(ctx); err != nil {
-		_ = db.Close()
+	db := &DB{
+		native: nativeDB,
+	}
+
+	if err := db.Ping(ctx); err != nil {
+		_ = nativeDB.Close()
 
 		return nil, fmt.Errorf(
 			"gorix database: failed to connect to %q: %w",
@@ -82,16 +107,12 @@ func (c *Connection) Driver() string {
 	return c.driver
 }
 
-func (c *Connection) DB() *sql.DB {
+func (c *Connection) DB() *DB {
 	return c.db
 }
 
-func (c *Connection) Ping(ctx context.Context) error {
-	if c == nil || c.db == nil {
-		return fmt.Errorf("gorix database: connection is not initialized")
-	}
-
-	return c.db.PingContext(ctx)
+func (c *Connection) Ping(ctx *gorixcontext.Context) error {
+	return c.db.Ping(ctx)
 }
 
 func (c *Connection) Stats() sql.DBStats {
@@ -99,13 +120,15 @@ func (c *Connection) Stats() sql.DBStats {
 		return sql.DBStats{}
 	}
 
-	return c.db.Stats()
+	return c.db.native.Stats()
 }
 
 func (c *Connection) Close() error {
-	if c == nil || c.db == nil {
+	if c == nil ||
+		c.db == nil ||
+		c.db.native == nil {
 		return nil
 	}
 
-	return c.db.Close()
+	return c.db.native.Close()
 }

@@ -1,26 +1,23 @@
 package database
 
-import (
-	"context"
-	"database/sql"
-)
+import gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 
 type Executor interface {
-	ExecContext(
-		ctx context.Context,
+	Exec(
+		ctx *gorixcontext.Context,
 		query string,
 		args ...any,
-	) (sql.Result, error)
+	) (Result, error)
 
-	QueryContext(
-		ctx context.Context,
+	Query(
+		ctx *gorixcontext.Context,
 		query string,
 		args ...any,
-	) (*sql.Rows, error)
+	) (*Rows, error)
 
-	QueryRowContext(
-		ctx context.Context,
+	QueryRow(
+		ctx *gorixcontext.Context,
 		query string,
 		args ...any,
-	) *sql.Row
+	) *Row
 }
