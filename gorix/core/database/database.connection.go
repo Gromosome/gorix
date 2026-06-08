@@ -3,9 +3,25 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
+
+type Stats struct {
+	MaxOpenConnections int
+
+	OpenConnections  int
+	InUseConnections int
+	IdleConnections  int
+
+	WaitCount    int64
+	WaitDuration time.Duration
+
+	MaxIdleClosed     int64
+	MaxIdleTimeClosed int64
+	MaxLifetimeClosed int64
+}
 
 type Connection struct {
 	name   string
@@ -115,12 +131,24 @@ func (c *Connection) Ping(ctx *gorixcontext.Context) error {
 	return c.db.Ping(ctx)
 }
 
-func (c *Connection) Stats() sql.DBStats {
-	if c == nil || c.db == nil {
-		return sql.DBStats{}
+func (c *Connection) Stats() Stats {
+	if c == nil ||
+		c.db == nil ||
+		c.db.native == nil {
+		return Stats{}
 	}
-
-	return c.db.native.Stats()
+	stats := c.db.native.Stats()
+	return Stats{
+		MaxOpenConnections: stats.MaxOpenConnections,
+		OpenConnections:    stats.OpenConnections,
+		InUseConnections:   stats.InUse,
+		IdleConnections:    stats.Idle,
+		WaitCount:          stats.WaitCount,
+		WaitDuration:       stats.WaitDuration,
+		MaxIdleClosed:      stats.MaxIdleClosed,
+		MaxIdleTimeClosed:  stats.MaxIdleTimeClosed,
+		MaxLifetimeClosed:  stats.MaxLifetimeClosed,
+	}
 }
 
 func (c *Connection) Close() error {

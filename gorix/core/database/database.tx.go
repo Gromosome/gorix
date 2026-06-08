@@ -6,38 +6,38 @@ func (tx *Tx) Exec(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (Result, error) {
+) Result {
 	result, err := tx.native.ExecContext(
 		ctx,
 		query,
 		args...,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{err: err}
 	}
 
 	return Result{
 		native: result,
-	}, nil
+	}
 }
 
 func (tx *Tx) Query(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (*Rows, error) {
+) *Rows {
 	rows, err := tx.native.QueryContext(
 		ctx,
 		query,
 		args...,
 	)
 	if err != nil {
-		return nil, err
+		return &Rows{err: err}
 	}
 
 	return &Rows{
 		native: rows,
-	}, nil
+	}
 }
 
 func (tx *Tx) QueryRow(

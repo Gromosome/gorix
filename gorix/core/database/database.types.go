@@ -14,14 +14,17 @@ type Tx struct {
 
 type Rows struct {
 	native *sql.Rows
+	err    error
 }
 
 type Row struct {
 	native *sql.Row
+	err    error
 }
 
 type Result struct {
 	native sql.Result
+	err    error
 }
 
 type TxOptions struct {

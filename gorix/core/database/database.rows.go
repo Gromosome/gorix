@@ -1,5 +1,10 @@
 package database
 
+import (
+	"database/sql"
+	"errors"
+)
+
 func (r *Rows) Next() bool {
 	return r != nil &&
 		r.native != nil &&
@@ -38,5 +43,11 @@ func (r *Rows) Close() error {
 func (r *Row) Scan(
 	destinations ...any,
 ) error {
-	return r.native.Scan(destinations...)
+	err := r.native.Scan(destinations...)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return ErrNoRows
+	}
+
+	return err
 }

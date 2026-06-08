@@ -6,29 +6,21 @@ import (
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
 
-func wrapDB(
-	nativeDB DB,
-) *DB {
-	return &DB{
-		native: nativeDB.native,
-	}
-}
-
 func (db *DB) Exec(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (Result, error) {
+) Result {
 	if db == nil || db.native == nil {
-		return Result{}, fmt.Errorf(
+		return Result{err: fmt.Errorf(
 			"gorix database: database is unavailable",
-		)
+		)}
 	}
 
 	if ctx == nil {
-		return Result{}, fmt.Errorf(
+		return Result{err: fmt.Errorf(
 			"gorix database: context cannot be nil",
-		)
+		)}
 	}
 
 	result, err := db.native.ExecContext(
@@ -37,29 +29,29 @@ func (db *DB) Exec(
 		args...,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{err: err}
 	}
 
 	return Result{
 		native: result,
-	}, nil
+	}
 }
 
 func (db *DB) Query(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (*Rows, error) {
+) *Rows {
 	if db == nil || db.native == nil {
-		return nil, fmt.Errorf(
+		return &Rows{err: fmt.Errorf(
 			"gorix database: database is unavailable",
-		)
+		)}
 	}
 
 	if ctx == nil {
-		return nil, fmt.Errorf(
+		return &Rows{err: fmt.Errorf(
 			"gorix database: context cannot be nil",
-		)
+		)}
 	}
 
 	rows, err := db.native.QueryContext(
@@ -68,12 +60,12 @@ func (db *DB) Query(
 		args...,
 	)
 	if err != nil {
-		return nil, err
+		return &Rows{err: err}
 	}
 
 	return &Rows{
 		native: rows,
-	}, nil
+	}
 }
 
 func (db *DB) QueryRow(
@@ -81,6 +73,12 @@ func (db *DB) QueryRow(
 	query string,
 	args ...any,
 ) *Row {
+	if db == nil || db.native == nil {
+		return &Row{err: fmt.Errorf(
+			"gorix database: database is unavailable",
+		),
+		}
+	}
 	return &Row{
 		native: db.native.QueryRowContext(
 			ctx,
