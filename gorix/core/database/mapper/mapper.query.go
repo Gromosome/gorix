@@ -35,20 +35,21 @@ func QueryOneInto(
 		return err
 	}
 
-	rows, err := executor.Query(
+	rows := executor.Query(
 		ctx,
 		query,
 		args...,
 	)
-	if err != nil {
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	if err := rows.Err(); err != nil {
 		return fmt.Errorf(
 			"gorix mapper: query execution failed: %w",
 			err,
 		)
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
@@ -99,25 +100,26 @@ func QueryManyInto(
 		return err
 	}
 
-	rows, err := executor.Query(
+	rows := executor.Query(
 		ctx,
 		query,
 		args...,
 	)
-	if err != nil {
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	if err := rows.Err(); err != nil {
 		return fmt.Errorf(
 			"gorix mapper: query execution failed: %w",
 			err,
 		)
 	}
-	defer func() {
-		_ = rows.Close()
-	}()
 
 	result := reflect.MakeSlice(
 		sliceValue.Type(),
 		0,
-		0,
+		sliceValue.Cap(),
 	)
 
 	for rows.Next() {
@@ -171,32 +173,24 @@ func Exec(
 	executor database.Executor,
 	query string,
 	args ...any,
-) (database.Result, error) {
+) database.Result {
 	if err := validateMapperContext(ctx); err != nil {
-		return database.Result{}, err
+		return database.NewErrorResult(err)
 	}
 
 	if err := validateExecutor(executor); err != nil {
-		return database.Result{}, err
+		return database.NewErrorResult(err)
 	}
 
 	if err := validateQuery(query); err != nil {
-		return database.Result{}, err
+		return database.NewErrorResult(err)
 	}
 
-	result, err := executor.Exec(
+	return executor.Exec(
 		ctx,
 		query,
 		args...,
 	)
-	if err != nil {
-		return database.Result{}, fmt.Errorf(
-			"gorix mapper: statement execution failed: %w",
-			err,
-		)
-	}
-
-	return result, nil
 }
 
 // QueryNamedOneInto resolves a statement from the registry and maps one row.
@@ -264,16 +258,16 @@ func ExecNamed(
 	registry *StatementRegistry,
 	statementName string,
 	args ...any,
-) (database.Result, error) {
+) database.Result {
 	if registry == nil {
-		return database.Result{}, fmt.Errorf(
+		return database.ErrResult(fmt.Errorf(
 			"gorix mapper: statement registry cannot be nil",
-		)
+		))
 	}
 
 	query, err := registry.Get(statementName)
 	if err != nil {
-		return database.Result{}, err
+		return database.ErrResult(err)
 	}
 
 	return Exec(

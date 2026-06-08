@@ -7,13 +7,13 @@ type Executor interface {
 		ctx *gorixcontext.Context,
 		query string,
 		args ...any,
-	) (Result, error)
+	) Result
 
 	Query(
 		ctx *gorixcontext.Context,
 		query string,
 		args ...any,
-	) (*Rows, error)
+	) *Rows
 
 	QueryRow(
 		ctx *gorixcontext.Context,
@@ -21,3 +21,6 @@ type Executor interface {
 		args ...any,
 	) *Row
 }
+
+var _ Executor = (*DB)(nil)
+var _ Executor = (*Tx)(nil)

@@ -13,3 +13,8 @@ func IsNoRows(err error) bool {
 	return errors.Is(err, ErrNoRows) ||
 		errors.Is(err, sql.ErrNoRows)
 }
+func NewErrorResult(err error) Result {
+	return Result{
+		err: err,
+	}
+}

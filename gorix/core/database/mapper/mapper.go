@@ -122,14 +122,14 @@ func (m *Mapper) Exec(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (database.Result, error) {
+) database.Result {
 	if err := validateMapperContext(ctx); err != nil {
-		return database.Result{}, err
+		return database.ErrResult(err)
 	}
 
 	db, err := m.DB()
 	if err != nil {
-		return database.Result{}, err
+		return database.ErrResult(err)
 	}
 
 	return Exec(
@@ -226,10 +226,10 @@ func (m *Mapper) ExecNamed(
 	ctx *gorixcontext.Context,
 	statementName string,
 	args ...any,
-) (database.Result, error) {
+) database.Result {
 	query, err := m.Statement(statementName)
 	if err != nil {
-		return database.Result{}, err
+		return database.ErrResult(err)
 	}
 
 	return m.Exec(
@@ -285,7 +285,7 @@ func (m *ExecutorMapper) Exec(
 	ctx *gorixcontext.Context,
 	query string,
 	args ...any,
-) (database.Result, error) {
+) database.Result {
 	return Exec(
 		ctx,
 		m.executor,

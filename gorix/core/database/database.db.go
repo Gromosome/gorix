@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"strings"
 
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
@@ -11,16 +12,8 @@ func (db *DB) Exec(
 	query string,
 	args ...any,
 ) Result {
-	if db == nil || db.native == nil {
-		return Result{err: fmt.Errorf(
-			"gorix database: database is unavailable",
-		)}
-	}
-
-	if ctx == nil {
-		return Result{err: fmt.Errorf(
-			"gorix database: context cannot be nil",
-		)}
+	if err := validateDBOperation(db, ctx, query); err != nil {
+		return Result{err: err}
 	}
 
 	result, err := db.native.ExecContext(
@@ -29,7 +22,12 @@ func (db *DB) Exec(
 		args...,
 	)
 	if err != nil {
-		return Result{err: err}
+		return Result{
+			err: fmt.Errorf(
+				"gorix database: statement execution failed: %w",
+				err,
+			),
+		}
 	}
 
 	return Result{
@@ -42,16 +40,8 @@ func (db *DB) Query(
 	query string,
 	args ...any,
 ) *Rows {
-	if db == nil || db.native == nil {
-		return &Rows{err: fmt.Errorf(
-			"gorix database: database is unavailable",
-		)}
-	}
-
-	if ctx == nil {
-		return &Rows{err: fmt.Errorf(
-			"gorix database: context cannot be nil",
-		)}
+	if err := validateDBOperation(db, ctx, query); err != nil {
+		return &Rows{err: err}
 	}
 
 	rows, err := db.native.QueryContext(
@@ -60,7 +50,12 @@ func (db *DB) Query(
 		args...,
 	)
 	if err != nil {
-		return &Rows{err: err}
+		return &Rows{
+			err: fmt.Errorf(
+				"gorix database: query execution failed: %w",
+				err,
+			),
+		}
 	}
 
 	return &Rows{
@@ -73,12 +68,10 @@ func (db *DB) QueryRow(
 	query string,
 	args ...any,
 ) *Row {
-	if db == nil || db.native == nil {
-		return &Row{err: fmt.Errorf(
-			"gorix database: database is unavailable",
-		),
-		}
+	if err := validateDBOperation(db, ctx, query); err != nil {
+		return &Row{err: err}
 	}
+
 	return &Row{
 		native: db.native.QueryRowContext(
 			ctx,
@@ -97,5 +90,58 @@ func (db *DB) Ping(
 		)
 	}
 
-	return db.native.PingContext(ctx)
+	if ctx == nil {
+		return fmt.Errorf(
+			"gorix database: context cannot be nil",
+		)
+	}
+
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf(
+			"gorix database: context is closed: %w",
+			err,
+		)
+	}
+
+	if err := db.native.PingContext(ctx); err != nil {
+		return fmt.Errorf(
+			"gorix database: ping failed: %w",
+			err,
+		)
+	}
+
+	return nil
+}
+
+func validateDBOperation(
+	db *DB,
+	ctx *gorixcontext.Context,
+	query string,
+) error {
+	if db == nil || db.native == nil {
+		return fmt.Errorf(
+			"gorix database: database is unavailable",
+		)
+	}
+
+	if ctx == nil {
+		return fmt.Errorf(
+			"gorix database: context cannot be nil",
+		)
+	}
+
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf(
+			"gorix database: context is closed: %w",
+			err,
+		)
+	}
+
+	if strings.TrimSpace(query) == "" {
+		return fmt.Errorf(
+			"gorix database: query cannot be empty",
+		)
+	}
+
+	return nil
 }
