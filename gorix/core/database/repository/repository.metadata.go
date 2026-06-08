@@ -1,4 +1,4 @@
-package orm
+package repository
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ func MetadataOf[T any]() (*EntityMetadata, error) {
 
 	if entityType == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: entity type cannot be nil",
+			"gorix repository: entity type cannot be nil",
 		)
 	}
 
@@ -48,7 +48,7 @@ func MetadataOf[T any]() (*EntityMetadata, error) {
 
 	if entityType.Kind() != reflect.Struct {
 		return nil, fmt.Errorf(
-			"gorix orm: entity must be a struct, got %s",
+			"gorix repository: entity must be a struct, got %s",
 			entityType.Kind(),
 		)
 	}
@@ -100,7 +100,7 @@ func buildEntityMetadata(
 			columnName = toSnakeCase(field.Name)
 		}
 
-		options := parseORMOptions(field.Tag.Get("orm"))
+		options := parseORMOptions(field.Tag.Get("repository"))
 
 		fieldMetadata := FieldMetadata{
 			Index:         i,
@@ -121,7 +121,7 @@ func buildEntityMetadata(
 		if fieldMetadata.PrimaryKey {
 			if metadata.PrimaryKey != nil {
 				return nil, fmt.Errorf(
-					"gorix orm: entity %s has multiple primary keys; composite keys are not supported yet",
+					"gorix repository: entity %s has multiple primary keys; composite keys are not supported yet",
 					entityType.Name(),
 				)
 			}
@@ -133,7 +133,7 @@ func buildEntityMetadata(
 
 	if metadata.PrimaryKey == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: entity %s must declare one primary key using orm:\"primaryKey\"",
+			"gorix repository: entity %s must declare one primary key using repository:\"primaryKey\"",
 			entityType.Name(),
 		)
 	}

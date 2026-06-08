@@ -1,16 +1,11 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 )
 
 func (r Result) Err() error {
 	return r.err
-}
-
-func (r Result) Native() sql.Result {
-	return r.native
 }
 
 func ErrResult(err error) Result {

@@ -3,7 +3,7 @@ package gorix
 import (
 	"github.com/Gromosome/gorix/gorix/core/database"
 	"github.com/Gromosome/gorix/gorix/core/database/mapper"
-	"github.com/Gromosome/gorix/gorix/core/database/orm"
+	"github.com/Gromosome/gorix/gorix/core/database/repository"
 )
 
 type DBManager = database.Manager
@@ -20,10 +20,10 @@ type StatementRegistry = mapper.StatementRegistry
 var NewMapper = mapper.New
 var MapperExec = mapper.Exec
 
-type Dialect = orm.Dialect
-type QueryBuilder = orm.QueryBuilder
+type Dialect = repository.Dialect
+type QueryBuilder = repository.QueryBuilder
 
-var NewQueryBuilder = orm.NewQueryBuilder
+var NewQueryBuilder = repository.NewQueryBuilder
 
-var ErrEntityNotFound = orm.ErrEntityNotFound
-var ErrMissingID = orm.ErrMissingID
+var ErrEntityNotFound = repository.ErrEntityNotFound
+var ErrMissingID = repository.ErrMissingID

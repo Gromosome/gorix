@@ -1,4 +1,4 @@
-package orm
+package repository
 
 import (
 	"fmt"
@@ -78,7 +78,7 @@ func ResolveDialect(driver string) (Dialect, error) {
 
 	default:
 		return nil, fmt.Errorf(
-			"gorix orm: unsupported driver dialect %q",
+			"gorix repository: unsupported driver dialect %q",
 			driver,
 		)
 	}

@@ -1,4 +1,4 @@
-package orm
+package repository
 
 import (
 	"fmt"
@@ -86,13 +86,13 @@ func (b *QueryBuilder) BuildSelect() (
 ) {
 	if b.dialect == nil {
 		return "", nil, fmt.Errorf(
-			"gorix orm: query dialect cannot be nil",
+			"gorix repository: query dialect cannot be nil",
 		)
 	}
 
 	if strings.TrimSpace(b.table) == "" {
 		return "", nil, fmt.Errorf(
-			"gorix orm: table cannot be empty",
+			"gorix repository: table cannot be empty",
 		)
 	}
 

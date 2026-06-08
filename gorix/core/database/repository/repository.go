@@ -8,14 +8,13 @@ import (
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 	"github.com/Gromosome/gorix/gorix/core/database"
 	"github.com/Gromosome/gorix/gorix/core/database/mapper"
-	"github.com/Gromosome/gorix/gorix/core/database/orm"
 )
 
 type Repository[T any, ID comparable] struct {
 	manager        *database.Manager
 	connectionName string
-	dialect        orm.Dialect
-	metadata       *orm.EntityMetadata
+	dialect        Dialect
+	metadata       *EntityMetadata
 }
 
 func NewRepository[T any, ID comparable](
@@ -24,7 +23,7 @@ func NewRepository[T any, ID comparable](
 ) (*Repository[T, ID], error) {
 	if manager == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: database manager cannot be nil",
+			"gorix repository: database manager cannot be nil",
 		)
 	}
 
@@ -42,20 +41,20 @@ func NewRepository[T any, ID comparable](
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"gorix orm: failed to resolve connection %q: %w",
+			"gorix repository: failed to resolve connection %q: %w",
 			connectionName,
 			err,
 		)
 	}
 
-	dialect, err := orm.ResolveDialect(
+	dialect, err := ResolveDialect(
 		connection.Driver(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	metadata, err := orm.MetadataOf[T]()
+	metadata, err := MetadataOf[T]()
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (r *Repository[T, ID]) ConnectionName() string {
 	return r.connectionName
 }
 
-func (r *Repository[T, ID]) Metadata() *orm.EntityMetadata {
+func (r *Repository[T, ID]) Metadata() *EntityMetadata {
 	if r == nil {
 		return nil
 	}
@@ -90,13 +89,13 @@ func (r *Repository[T, ID]) DB() (
 ) {
 	if r == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: repository cannot be nil",
+			"gorix repository: repository cannot be nil",
 		)
 	}
 
 	if r.manager == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: database manager is unavailable",
+			"gorix repository: database manager is unavailable",
 		)
 	}
 
@@ -105,7 +104,7 @@ func (r *Repository[T, ID]) DB() (
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"gorix orm: failed to resolve database %q: %w",
+			"gorix repository: failed to resolve database %q: %w",
 			r.connectionName,
 			err,
 		)
@@ -161,7 +160,7 @@ func (r *Repository[T, ID]) FindAll(
 		query,
 	); err != nil {
 		return nil, fmt.Errorf(
-			"gorix orm: find all failed: %w",
+			"gorix repository: find all failed: %w",
 			err,
 		)
 	}
@@ -171,7 +170,7 @@ func (r *Repository[T, ID]) FindAll(
 
 func (r *Repository[T, ID]) Find(
 	ctx *gorixcontext.Context,
-	builder *orm.QueryBuilder,
+	builder *QueryBuilder,
 ) ([]T, error) {
 	if err := validateRepositoryContext(ctx); err != nil {
 		return nil, err
@@ -179,7 +178,7 @@ func (r *Repository[T, ID]) Find(
 
 	if builder == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: query builder cannot be nil",
+			"gorix repository: query builder cannot be nil",
 		)
 	}
 
@@ -203,7 +202,7 @@ func (r *Repository[T, ID]) Find(
 		args...,
 	); err != nil {
 		return nil, fmt.Errorf(
-			"gorix orm: find query failed: %w",
+			"gorix repository: find query failed: %w",
 			err,
 		)
 	}
@@ -213,7 +212,7 @@ func (r *Repository[T, ID]) Find(
 
 func (r *Repository[T, ID]) FindOne(
 	ctx *gorixcontext.Context,
-	builder *orm.QueryBuilder,
+	builder *QueryBuilder,
 ) (*T, error) {
 	if err := validateRepositoryContext(ctx); err != nil {
 		return nil, err
@@ -221,7 +220,7 @@ func (r *Repository[T, ID]) FindOne(
 
 	if builder == nil {
 		return nil, fmt.Errorf(
-			"gorix orm: query builder cannot be nil",
+			"gorix repository: query builder cannot be nil",
 		)
 	}
 
@@ -247,11 +246,11 @@ func (r *Repository[T, ID]) FindOne(
 		args...,
 	); err != nil {
 		if database.IsNoRows(err) {
-			return nil, orm.ErrEntityNotFound
+			return nil, ErrEntityNotFound
 		}
 
 		return nil, fmt.Errorf(
-			"gorix orm: find one failed: %w",
+			"gorix repository: find one failed: %w",
 			err,
 		)
 	}
@@ -309,7 +308,7 @@ func (r *Repository[T, ID]) Save(
 
 	if entity == nil {
 		return fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -322,7 +321,7 @@ func (r *Repository[T, ID]) Save(
 
 	if primaryKey == nil {
 		return fmt.Errorf(
-			"gorix orm: entity %s has no primary key",
+			"gorix repository: entity %s has no primary key",
 			r.metadata.Type.Name(),
 		)
 	}
@@ -360,7 +359,7 @@ func (r *Repository[T, ID]) Delete(
 ) error {
 	if entity == nil {
 		return fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -373,7 +372,7 @@ func (r *Repository[T, ID]) Delete(
 
 	if primaryKey == nil {
 		return fmt.Errorf(
-			"gorix orm: primary key is unavailable",
+			"gorix repository: primary key is unavailable",
 		)
 	}
 
@@ -382,13 +381,13 @@ func (r *Repository[T, ID]) Delete(
 	)
 
 	if primaryKeyValue.IsZero() {
-		return orm.ErrMissingID
+		return ErrMissingID
 	}
 
 	id, ok := primaryKeyValue.Interface().(ID)
 	if !ok {
 		return fmt.Errorf(
-			"gorix orm: primary key type %s does not match repository ID type",
+			"gorix repository: primary key type %s does not match repository ID type",
 			primaryKeyValue.Type(),
 		)
 	}
@@ -420,7 +419,7 @@ func (r *Repository[T, ID]) Count(
 		query,
 	).Scan(&count); err != nil {
 		return 0, fmt.Errorf(
-			"gorix orm: count failed: %w",
+			"gorix repository: count failed: %w",
 			err,
 		)
 	}
@@ -460,7 +459,7 @@ func (r *Repository[T, ID]) ExistsByID(
 		id,
 	).Scan(&count); err != nil {
 		return false, fmt.Errorf(
-			"gorix orm: exists query failed: %w",
+			"gorix repository: exists query failed: %w",
 			err,
 		)
 	}
@@ -468,7 +467,7 @@ func (r *Repository[T, ID]) ExistsByID(
 	return count > 0, nil
 }
 
-func (r *Repository[T, ID]) NewQuery() *orm.QueryBuilder {
+func (r *Repository[T, ID]) NewQuery() *QueryBuilder {
 	if r == nil ||
 		r.metadata == nil ||
 		r.dialect == nil {
@@ -488,7 +487,7 @@ func (r *Repository[T, ID]) NewQuery() *orm.QueryBuilder {
 		)
 	}
 
-	return orm.NewQueryBuilder(
+	return NewQueryBuilder(
 		r.dialect,
 		r.metadata.TableName,
 	).Select(columns...)
@@ -530,11 +529,11 @@ func (r *Repository[T, ID]) findByIDWithExecutor(
 		id,
 	); err != nil {
 		if database.IsNoRows(err) {
-			return nil, orm.ErrEntityNotFound
+			return nil, ErrEntityNotFound
 		}
 
 		return nil, fmt.Errorf(
-			"gorix orm: find by ID failed: %w",
+			"gorix repository: find by ID failed: %w",
 			err,
 		)
 	}
@@ -549,7 +548,7 @@ func (r *Repository[T, ID]) insertWithExecutor(
 ) error {
 	if entity == nil {
 		return fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -599,7 +598,7 @@ func (r *Repository[T, ID]) insertWithExecutor(
 
 	if len(columns) == 0 {
 		return fmt.Errorf(
-			"gorix orm: entity has no insertable fields",
+			"gorix repository: entity has no insertable fields",
 		)
 	}
 
@@ -632,15 +631,15 @@ func (r *Repository[T, ID]) insertWithExecutor(
 		)
 	}
 
-	result, err := executor.Exec(
+	result := executor.Exec(
 		ctx,
 		query,
 		args...,
 	)
-	if err != nil {
+	if result.Err() != nil {
 		return fmt.Errorf(
-			"gorix orm: insert failed: %w",
-			err,
+			"gorix repository: insert failed: %w",
+			result.Err(),
 		)
 	}
 
@@ -665,7 +664,7 @@ func (r *Repository[T, ID]) updateWithExecutor(
 ) error {
 	if entity == nil {
 		return fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -677,7 +676,7 @@ func (r *Repository[T, ID]) updateWithExecutor(
 	primaryKey := r.metadata.PrimaryKey
 	if primaryKey == nil {
 		return fmt.Errorf(
-			"gorix orm: primary key is unavailable",
+			"gorix repository: primary key is unavailable",
 		)
 	}
 
@@ -686,7 +685,7 @@ func (r *Repository[T, ID]) updateWithExecutor(
 	)
 
 	if primaryKeyValue.IsZero() {
-		return orm.ErrMissingID
+		return ErrMissingID
 	}
 
 	assignments := make([]string, 0)
@@ -748,21 +747,21 @@ func (r *Repository[T, ID]) updateWithExecutor(
 		),
 	)
 
-	result, err := executor.Exec(
+	result := executor.Exec(
 		ctx,
 		query,
 		args...,
 	)
-	if err != nil {
+	if result.Err() != nil {
 		return fmt.Errorf(
-			"gorix orm: update failed: %w",
+			"gorix repository: update failed: %w",
 			err,
 		)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err == nil && rowsAffected == 0 {
-		return orm.ErrEntityNotFound
+		return ErrEntityNotFound
 	}
 
 	return nil
@@ -784,21 +783,21 @@ func (r *Repository[T, ID]) deleteByIDWithExecutor(
 		r.dialect.Placeholder(1),
 	)
 
-	result, err := executor.Exec(
+	result := executor.Exec(
 		ctx,
 		query,
 		id,
 	)
-	if err != nil {
+	if result.Err() != nil {
 		return fmt.Errorf(
-			"gorix orm: delete failed: %w",
-			err,
+			"gorix repository: delete failed: %w",
+			result.Err(),
 		)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err == nil && rowsAffected == 0 {
-		return orm.ErrEntityNotFound
+		return ErrEntityNotFound
 	}
 
 	return nil
@@ -892,7 +891,7 @@ func (r *ScopedRepository[T, ID]) Save(
 
 	if entity == nil {
 		return fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -929,13 +928,13 @@ func (r *ScopedRepository[T, ID]) validate() error {
 	if r == nil ||
 		r.repository == nil {
 		return fmt.Errorf(
-			"gorix orm: scoped repository is unavailable",
+			"gorix repository: scoped repository is unavailable",
 		)
 	}
 
 	if r.executor == nil {
 		return fmt.Errorf(
-			"gorix orm: scoped executor is unavailable",
+			"gorix repository: scoped executor is unavailable",
 		)
 	}
 
@@ -947,13 +946,13 @@ func validateRepositoryContext(
 ) error {
 	if ctx == nil {
 		return fmt.Errorf(
-			"gorix orm: context cannot be nil",
+			"gorix repository: context cannot be nil",
 		)
 	}
 
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf(
-			"gorix orm: context is closed: %w",
+			"gorix repository: context is closed: %w",
 			err,
 		)
 	}
@@ -966,7 +965,7 @@ func entityStructValue[T any](
 ) (reflect.Value, error) {
 	if entity == nil {
 		return reflect.Value{}, fmt.Errorf(
-			"gorix orm: entity cannot be nil",
+			"gorix repository: entity cannot be nil",
 		)
 	}
 
@@ -975,7 +974,7 @@ func entityStructValue[T any](
 	if value.Kind() != reflect.Pointer ||
 		value.IsNil() {
 		return reflect.Value{}, fmt.Errorf(
-			"gorix orm: entity must be a non-nil pointer",
+			"gorix repository: entity must be a non-nil pointer",
 		)
 	}
 
@@ -983,7 +982,7 @@ func entityStructValue[T any](
 
 	if value.Kind() != reflect.Struct {
 		return reflect.Value{}, fmt.Errorf(
-			"gorix orm: entity must point to a struct, got %s",
+			"gorix repository: entity must point to a struct, got %s",
 			value.Kind(),
 		)
 	}
