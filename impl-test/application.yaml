@@ -2,5 +2,13 @@ gorix:
   app:
     port: 8080
     prod: false
+  databases:
+    default:
+      driver: pgx
+      dsn: postgres://root:root@localhost:5432/root_db?sslmode=disable
+      max-open-connections: 25
+      max-idle-connections: 10
+      connection-max-lifetime: 30m
+      connection-max-idle-time: 5m
 
 

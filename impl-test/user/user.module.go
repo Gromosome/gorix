@@ -19,6 +19,7 @@ func (m *UserModule) BasePath() gorix.BasePath {
 func (m *UserModule) Providers() []any {
 	return []any{
 		NewUserService,
+		NewUserRepository,
 	}
 }
 

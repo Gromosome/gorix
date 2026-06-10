@@ -1,0 +1,147 @@
+# ==========================================
+# Go build outputs
+# ==========================================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Go coverage files
+*.out
+coverage.*
+coverage/
+
+# Go workspace files
+
+go.work.sum
+impl-test/go.sum
+# Compiled application binaries
+bin/
+build/
+dist/
+out/
+tmp/
+
+# Local Gorix application binary
+gorix
+gorix.exe
+
+# ==========================================
+# Dependencies
+# ==========================================
+vendor/
+
+# Uncomment only if you intentionally do not
+# want to commit go.sum
+# go.sum
+
+# ==========================================
+# Environment and secrets
+# ==========================================
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+secrets/
+credentials/
+
+
+
+config/local/
+config/secrets/
+
+# ==========================================
+# Runtime files
+# ==========================================
+*.log
+logs/
+
+*.pid
+*.pid.lock
+
+storage/
+uploads/
+cache/
+
+# Temporary generated files
+generated/
+.gen/
+
+# ==========================================
+# Database files
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# IDEs and editors
+# ==========================================
+.idea/
+*.iml
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.codex
+.agents
+
+
+*.swp
+*.swo
+*~
+
+# ==========================================
+# Operating system files
+# ==========================================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# Docker local overrides
+# ==========================================
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ==========================================
+# Air live reload
+# ==========================================
+.air.toml
+tmp/
+
+# ==========================================
+# Profiling and debugging
+# ==========================================
+*.prof
+*.pprof
+debug
+__debug_bin*
+
+# ==========================================
+# Task runners and local tools
+# ==========================================
+.task/
+.tools/
+
+# ==========================================
+# Documentation build output
+# ==========================================
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+docs/build/
+site/
+

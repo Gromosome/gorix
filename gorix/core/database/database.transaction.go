@@ -120,6 +120,8 @@ func toNativeIsolation(
 		return sql.LevelSerializable
 	case IsolationLinearizable:
 		return sql.LevelLinearizable
+	case IsolationDefault:
+		return sql.LevelDefault
 	default:
 		return sql.LevelDefault
 	}

@@ -36,24 +36,6 @@ func NewRepository[T any, ID comparable](
 		)
 	}
 
-	connection, err := manager.Connection(
-		connectionName,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"gorix repository: failed to resolve connection %q: %w",
-			connectionName,
-			err,
-		)
-	}
-
-	dialect, err := ResolveDialect(
-		connection.Driver(),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	metadata, err := MetadataOf[T]()
 	if err != nil {
 		return nil, err
@@ -62,7 +44,6 @@ func NewRepository[T any, ID comparable](
 	return &Repository[T, ID]{
 		manager:        manager,
 		connectionName: connectionName,
-		dialect:        dialect,
 		metadata:       metadata,
 	}, nil
 }
@@ -99,7 +80,7 @@ func (r *Repository[T, ID]) DB() (
 		)
 	}
 
-	db, err := r.manager.DB(
+	connection, err := r.manager.Connection(
 		r.connectionName,
 	)
 	if err != nil {
@@ -110,7 +91,18 @@ func (r *Repository[T, ID]) DB() (
 		)
 	}
 
-	return db, nil
+	if r.dialect == nil {
+		dialect, err := ResolveDialect(
+			connection.Driver(),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		r.dialect = dialect
+	}
+
+	return connection.DB(), nil
 }
 
 func (r *Repository[T, ID]) FindByID(
@@ -469,8 +461,17 @@ func (r *Repository[T, ID]) ExistsByID(
 
 func (r *Repository[T, ID]) NewQuery() *QueryBuilder {
 	if r == nil ||
-		r.metadata == nil ||
-		r.dialect == nil {
+		r.metadata == nil {
+		return nil
+	}
+
+	if r.dialect == nil {
+		if err := r.ensureDialect(); err != nil {
+			return nil
+		}
+	}
+
+	if r.dialect == nil {
 		return nil
 	}
 
@@ -500,6 +501,45 @@ func (r *Repository[T, ID]) WithExecutor(
 		repository: r,
 		executor:   executor,
 	}
+}
+
+func (r *Repository[T, ID]) ensureDialect() error {
+	if r == nil {
+		return fmt.Errorf(
+			"gorix repository: repository cannot be nil",
+		)
+	}
+
+	if r.dialect != nil {
+		return nil
+	}
+
+	if r.manager == nil {
+		return fmt.Errorf(
+			"gorix repository: database manager is unavailable",
+		)
+	}
+
+	connection, err := r.manager.Connection(
+		r.connectionName,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"gorix repository: failed to resolve connection %q: %w",
+			r.connectionName,
+			err,
+		)
+	}
+
+	dialect, err := ResolveDialect(
+		connection.Driver(),
+	)
+	if err != nil {
+		return err
+	}
+
+	r.dialect = dialect
+	return nil
 }
 
 func (r *Repository[T, ID]) findByIDWithExecutor(
@@ -938,7 +978,7 @@ func (r *ScopedRepository[T, ID]) validate() error {
 		)
 	}
 
-	return nil
+	return r.repository.ensureDialect()
 }
 
 func validateRepositoryContext(

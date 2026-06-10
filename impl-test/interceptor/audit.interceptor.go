@@ -15,6 +15,7 @@ func NewAuditInterceptor() *AuditInterceptor {
 
 func (i *AuditInterceptor) Before(ctx *gorix.ExecutionContext) error {
 	fmt.Print("Reached..")
+
 	return nil
 }
 

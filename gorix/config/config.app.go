@@ -38,6 +38,7 @@ func LoadConfig(root string) Config {
 	cfg.Gorix.App.Prod = yaml.GetBoolPtr(parsed, "gorix.app.prod")
 	cfg.Gorix.App.Host = yaml.GetString(parsed, "gorix.app.host", "0.0.0.0")
 	cfg.Gorix.App.Port = yaml.GetInt(parsed, "gorix.app.port", 8080)
+	cfg.Gorix.Databases = loadDatabaseConfigs(parsed)
 
 	return cfg
 }
@@ -50,8 +51,44 @@ func DefaultConfig() Config {
 				Host: "0.0.0.0",
 				Port: 8080,
 			},
+			Databases: make(map[string]DatabaseConfig),
 		},
 	}
+}
+
+func loadDatabaseConfigs(
+	parsed map[string]yaml.YAMLValue,
+) map[string]DatabaseConfig {
+	databaseSources, ok := yaml.GetMap(
+		parsed,
+		"gorix.databases",
+	)
+	if !ok {
+		return make(map[string]DatabaseConfig)
+	}
+
+	databases := make(
+		map[string]DatabaseConfig,
+		len(databaseSources),
+	)
+
+	for name, value := range databaseSources {
+		source, ok := value.(map[string]yaml.YAMLValue)
+		if !ok {
+			continue
+		}
+
+		databases[name] = DatabaseConfig{
+			Driver:                yaml.GetString(source, "driver", ""),
+			DSN:                   yaml.GetString(source, "dsn", ""),
+			MaxOpenConnections:    yaml.GetInt(source, "max-open-connections", 0),
+			MaxIdleConnections:    yaml.GetInt(source, "max-idle-connections", 0),
+			ConnectionMaxLifetime: yaml.GetString(source, "connection-max-lifetime", ""),
+			ConnectionMaxIdleTime: yaml.GetString(source, "connection-max-idle-time", ""),
+		}
+	}
+
+	return databases
 }
 
 func (c Config) IsProd() bool {

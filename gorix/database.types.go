@@ -14,11 +14,22 @@ type TransactionFunc = database.TransactionFunc
 
 var WithTransaction = database.WithTransaction
 
-type Mapper = mapper.Mapper
+type SQLMapper = mapper.Mapper
+type SQLRepository[T any, ID comparable] = repository.Repository[T, ID]
 type StatementRegistry = mapper.StatementRegistry
 
-var NewMapper = mapper.New
-var MapperExec = mapper.Exec
+var NewSQLMapper = mapper.New
+var SQLMapperExec = mapper.Exec
+
+func NewSQLRepository[T any, ID comparable](
+	manager *database.Manager,
+	connectionNames ...string,
+) (*SQLRepository[T, ID], error) {
+	return repository.NewRepository[T, ID](
+		manager,
+		connectionNames...,
+	)
+}
 
 type Dialect = repository.Dialect
 type QueryBuilder = repository.QueryBuilder
@@ -27,3 +38,21 @@ var NewQueryBuilder = repository.NewQueryBuilder
 
 var ErrEntityNotFound = repository.ErrEntityNotFound
 var ErrMissingID = repository.ErrMissingID
+var IsEntityNotFound = repository.IsEntityNotFound
+var IsMissingID = repository.IsMissingID
+
+var DBIsNoRows = database.IsNoRows
+
+const (
+	DBIsolationDefault         = database.IsolationDefault
+	DBIsolationReadUncommitted = database.IsolationReadUncommitted
+	DBIsolationReadCommitted   = database.IsolationReadCommitted
+	DBIsolationWriteCommitted  = database.IsolationWriteCommitted
+	DBIsolationRepeatableRead  = database.IsolationRepeatableRead
+	DBIsolationSnapshot        = database.IsolationSnapshot
+	DBIsolationSerializable    = database.IsolationSerializable
+	DBIsolationLinearizable    = database.IsolationLinearizable
+)
+
+type DBTxOptions = database.TxOptions
+type DBTx = database.Tx

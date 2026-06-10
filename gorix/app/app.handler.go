@@ -241,9 +241,15 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 }
 func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
-
+	var methodNotAllowedRoute *routeEntry
+	var methodNotAllowedContext *context.Context
+	methodNotAllowedScore := -1
+	var bestRoute *routeEntry
+	var bestContext *context.Context
+	bestScore := -1
+	//Register Routes based on Route Scoring
 	for _, route := range a.routeEntries {
-		matched, params := matchRoute(route.Path, requestPath)
+		matched, params, score := matchRoute(route.Path, requestPath)
 		if !matched {
 			continue
 		}
@@ -252,37 +258,53 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 		c.SetParams(params)
 
 		if r.Method != string(route.Method) {
-			a.handleException(&hook.ExceptionContext{
-				Context:    c,
-				Method:     route.Method,
-				Path:       route.Path,
-				Module:     route.Module,
-				Controller: route.Controller,
-				Handler:    route.HandlerName,
-				Error:      fmt.Errorf("method not allowed"),
-				StatusCode: context.StatusMethodNotAllowed,
-			})
-			return
+			if methodNotAllowedRoute == nil ||
+				score > methodNotAllowedScore {
+				methodNotAllowedRoute = &route
+				methodNotAllowedContext = c
+				methodNotAllowedScore = score
+			}
+			continue
 		}
 
-		if err := route.Handler(c); err != nil {
+		if score > bestScore {
+			bestRoute = &route
+			bestContext = c
+			bestScore = score
+		}
+	}
+
+	if bestRoute != nil {
+		if err := bestRoute.Handler(bestContext); err != nil {
 			a.handleException(&hook.ExceptionContext{
-				Context:    c,
-				Method:     route.Method,
-				Path:       route.Path,
-				Module:     route.Module,
-				Controller: route.Controller,
-				Handler:    route.HandlerName,
+				Context:    bestContext,
+				Method:     bestRoute.Method,
+				Path:       bestRoute.Path,
+				Module:     bestRoute.Module,
+				Controller: bestRoute.Controller,
+				Handler:    bestRoute.HandlerName,
 				Error:      err,
 				StatusCode: context.StatusInternalServerError,
 			})
-			return
 		}
-
 		return
 	}
 
 	c := context.NewContext(w, r)
+
+	if methodNotAllowedRoute != nil {
+		a.handleException(&hook.ExceptionContext{
+			Context:    methodNotAllowedContext,
+			Method:     methodNotAllowedRoute.Method,
+			Path:       methodNotAllowedRoute.Path,
+			Module:     methodNotAllowedRoute.Module,
+			Controller: methodNotAllowedRoute.Controller,
+			Handler:    methodNotAllowedRoute.HandlerName,
+			Error:      fmt.Errorf("method not allowed"),
+			StatusCode: context.StatusMethodNotAllowed,
+		})
+		return
+	}
 
 	a.handleException(&hook.ExceptionContext{
 		Context:    c,
@@ -292,7 +314,17 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 		StatusCode: context.StatusNotFound,
 	})
 }
-func matchRoute(pattern string, actualPath string) (bool, map[string]string) {
+
+/*
+Route priority is determined by scoring each path segment.
+
+	 Static segments receive a higher score than dynamic parameters:
+	  		/user/summary -> 10 + 10 = 20
+		   	/user/:id     -> 10 + 1  = 11
+	    Routes with higher scores are matched first, preventing a dynamic route
+		such as /user/:id from incorrectly capturing /user/summary, regardless
+*/
+func matchRoute(pattern string, actualPath string) (bool, map[string]string, int) {
 	pattern = normalizeRoutePath(pattern)
 	actualPath = normalizeRoutePath(actualPath)
 
@@ -300,10 +332,11 @@ func matchRoute(pattern string, actualPath string) (bool, map[string]string) {
 	actualParts := splitRoutePath(actualPath)
 
 	if len(patternParts) != len(actualParts) {
-		return false, nil
+		return false, nil, 0
 	}
 
 	params := make(map[string]string)
+	score := 0
 
 	for i := range patternParts {
 		patternPart := patternParts[i]
@@ -312,15 +345,18 @@ func matchRoute(pattern string, actualPath string) (bool, map[string]string) {
 		if strings.HasPrefix(patternPart, ":") {
 			key := strings.TrimPrefix(patternPart, ":")
 			params[key] = actualPart
+			score += 1
 			continue
 		}
 
 		if patternPart != actualPart {
-			return false, nil
+			return false, nil, 0
 		}
+
+		score += 10
 	}
 
-	return true, params
+	return true, params, score
 }
 
 func splitRoutePath(path string) []string {
