@@ -50,7 +50,7 @@ func (MySQLDialect) SupportsReturning() bool {
 type SQLiteDialect struct{}
 
 func (SQLiteDialect) Name() string {
-	return "sqlite"
+	return "sqlite3"
 }
 
 func (SQLiteDialect) Placeholder(_ int) string {
@@ -73,7 +73,7 @@ func ResolveDialect(driver string) (Dialect, error) {
 	case "mysql":
 		return MySQLDialect{}, nil
 
-	case "sqlite", "sqlite3":
+	case "sqlite3", "sqlite3":
 		return SQLiteDialect{}, nil
 
 	default:
