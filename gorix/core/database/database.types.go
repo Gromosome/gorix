@@ -2,23 +2,25 @@ package database
 
 import (
 	"database/sql"
+
+	sqldriver "github.com/Gromosome/gorix/sql-driver-manager"
 )
 
 type DB struct {
-	native *sql.DB
+	native *sqldriver.Manager
 }
 
 type Tx struct {
-	native *sql.Tx
+	native *sqldriver.Tx
 }
 
 type Rows struct {
-	native *sql.Rows
+	native *sqldriver.Rows
 	err    error
 }
 
 type Row struct {
-	native *sql.Row
+	native *sqldriver.Row
 	err    error
 }
 

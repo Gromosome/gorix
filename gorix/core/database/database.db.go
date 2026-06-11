@@ -12,7 +12,11 @@ func (db *DB) Exec(
 	query string,
 	args ...any,
 ) Result {
-	if err := validateDBOperation(db, ctx, query); err != nil {
+	if err := validateDBOperation(
+		db,
+		ctx,
+		query,
+	); err != nil {
 		return Result{err: err}
 	}
 
@@ -40,7 +44,11 @@ func (db *DB) Query(
 	query string,
 	args ...any,
 ) *Rows {
-	if err := validateDBOperation(db, ctx, query); err != nil {
+	if err := validateDBOperation(
+		db,
+		ctx,
+		query,
+	); err != nil {
 		return &Rows{err: err}
 	}
 
@@ -68,7 +76,11 @@ func (db *DB) QueryRow(
 	query string,
 	args ...any,
 ) *Row {
-	if err := validateDBOperation(db, ctx, query); err != nil {
+	if err := validateDBOperation(
+		db,
+		ctx,
+		query,
+	); err != nil {
 		return &Row{err: err}
 	}
 
@@ -103,14 +115,7 @@ func (db *DB) Ping(
 		)
 	}
 
-	if err := db.native.PingContext(ctx); err != nil {
-		return fmt.Errorf(
-			"gorix database: ping failed: %w",
-			err,
-		)
-	}
-
-	return nil
+	return db.native.PingContext(ctx)
 }
 
 func validateDBOperation(

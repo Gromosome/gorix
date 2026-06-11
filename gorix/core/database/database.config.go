@@ -15,6 +15,7 @@ type Config struct {
 	MaxIdleConnections    int
 	ConnectionMaxLifetime time.Duration
 	ConnectionMaxIdleTime time.Duration
+	PingTimeout           time.Duration
 }
 
 func (c Config) Normalize() Config {

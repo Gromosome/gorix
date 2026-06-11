@@ -14,6 +14,7 @@ type DatabaseConfig struct {
 	MaxIdleConnections    int
 	ConnectionMaxLifetime string
 	ConnectionMaxIdleTime string
+	PingTimeout           string
 }
 
 func (c Config) DatabaseConfigs() ([]database.Config, error) {
@@ -46,6 +47,17 @@ func (c Config) DatabaseConfigs() ([]database.Config, error) {
 			)
 		}
 
+		pingTimeout, err := parseDuration(
+			source.PingTimeout,
+		)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"gorix config: invalid database %q ping-timeout: %w",
+				name,
+				err,
+			)
+		}
+
 		configs = append(
 			configs,
 			database.Config{
@@ -56,6 +68,7 @@ func (c Config) DatabaseConfigs() ([]database.Config, error) {
 				MaxIdleConnections:    source.MaxIdleConnections,
 				ConnectionMaxLifetime: maxLifetime,
 				ConnectionMaxIdleTime: maxIdleTime,
+				PingTimeout:           pingTimeout,
 			},
 		)
 	}
