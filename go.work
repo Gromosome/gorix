@@ -3,4 +3,11 @@ go 1.26
 use (
 	./gorix
 	./impl-test
+	./sql-driver-manager
+	./sql-drivers/mssql
+	./sql-drivers/mysql
+	./sql-drivers/postgres
+	./sql-drivers/sqlite3
+	./sql-drivers/sqlite-modern
+	./sql-drivers/oracle
 	)
