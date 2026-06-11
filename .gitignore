@@ -26,10 +26,6 @@ dist/
 out/
 tmp/
 
-# Local Gorix application binary
-gorix
-gorix.exe
-
 # ==========================================
 # Dependencies
 # ==========================================
