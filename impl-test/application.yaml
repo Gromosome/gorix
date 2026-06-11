@@ -4,7 +4,7 @@ gorix:
     prod: false
   databases:
     default:
-      driver: pgx
+      driver: postgres
       dsn: postgres://root:root@localhost:5432/root_db?sslmode=disable
       max-open-connections: 25
       max-idle-connections: 10

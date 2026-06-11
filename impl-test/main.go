@@ -7,7 +7,7 @@ import (
 	middlewares "github.com/Gromosome/gorix/impl-test/middleware"
 	"github.com/Gromosome/gorix/impl-test/promotion"
 	"github.com/Gromosome/gorix/impl-test/user"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/Gromosome/gorix/sql-drivers/postgres"
 )
 
 func main() {

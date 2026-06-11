@@ -22,6 +22,56 @@ func (f *ExceptionFilter) Catch(ctx *gorix.ExceptionContext) {
 		})
 		return
 	}
+	if dbError, ok := gorix.AsDatabaseError(ctx.Error); ok {
+		switch dbError.Kind {
+		case gorix.DatabaseErrorDuplicateKey,
+			gorix.DatabaseErrorUniqueViolation:
+
+			_ = ctx.Context.
+				Status(gorix.StatusConflict).
+				JSON(map[string]any{
+					"success":    false,
+					"error":      "resource already exists",
+					"constraint": dbError.Constraint,
+				})
+
+		case gorix.DatabaseErrorForeignKey,
+			gorix.DatabaseErrorNotNull,
+			gorix.DatabaseErrorCheckConstraint:
+
+			_ = ctx.Context.
+				Status(gorix.StatusBadRequest).
+				JSON(map[string]any{
+					"success": false,
+					"error":   "invalid database operation",
+				})
+
+		case gorix.DatabaseErrorTimeout:
+			_ = ctx.Context.
+				Status(gorix.StatusGatewayTimeout).
+				JSON(map[string]any{
+					"success": false,
+					"error":   "database operation timed out",
+				})
+
+		case gorix.DatabaseErrorConnection:
+			_ = ctx.Context.
+				Status(gorix.StatusServiceUnavailable).
+				JSON(map[string]any{
+					"success": false,
+					"error":   "database unavailable",
+				})
+
+		default:
+			_ = ctx.Context.
+				Status(gorix.StatusInternalServerError).
+				JSON(map[string]any{
+					"success": false,
+					"error":   "database operation failed",
+				})
+		}
+		return
+	}
 
 	_ = ctx.Context.Status(ctx.StatusCode).JSON(map[string]any{
 		"success": false,

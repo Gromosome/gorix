@@ -1,8 +1,6 @@
 package user
 
 import (
-	"fmt"
-
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
 )
 
@@ -50,18 +48,6 @@ func (s *UserService) Create(
 	ctx *gorixcontext.Context,
 	request CreateUserDto,
 ) (*User, error) {
-	existing, err :=
-		s.userRepository.FindByEmail(
-			ctx,
-			request.Email,
-		)
-
-	if err == nil && existing != nil {
-		return nil, fmt.Errorf(
-			"user with email %s already exists",
-			request.Email,
-		)
-	}
 
 	user := &User{
 		Name:   request.Name,
