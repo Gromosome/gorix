@@ -11,8 +11,9 @@ type Context struct {
 	W http.ResponseWriter
 	R *http.Request
 
-	status StatusCode
-	params map[string]string
+	status    StatusCode
+	committed bool
+	params    map[string]string
 }
 
 func NewContext(
@@ -38,6 +39,9 @@ func Background() *Context {
 		native: native.Background(),
 		params: make(map[string]string),
 	}
+}
+func (c *Context) IsCommitted() bool {
+	return c.committed
 }
 
 func TODO() *Context {
