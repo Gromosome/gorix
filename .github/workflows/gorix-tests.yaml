@@ -1,0 +1,44 @@
+name: Gorix Tests
+
+on:
+  push:
+    paths:
+      - "gorix/test/**"
+      - "gorix/**/*.go"
+      - "gorix/go.mod"
+      - "gorix/go.sum"
+      - "go.work"
+      - "go.work.sum"
+  pull_request:
+    paths:
+      - "gorix/test/**"
+      - "gorix/**/*.go"
+      - "gorix/go.mod"
+      - "gorix/go.sum"
+      - "go.work"
+      - "go.work.sum"
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Gorix tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: gorix
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          cache-dependency-path: |
+            go.work.sum
+            gorix/go.mod
+
+      - name: Run tests
+        run: go test ./test/...

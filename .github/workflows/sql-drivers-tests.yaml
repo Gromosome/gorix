@@ -1,0 +1,47 @@
+name: SQL Drivers Tests
+
+on:
+  push:
+    paths:
+      - "sql-driver-manager/**"
+      - "sql-drivers/**"
+      - "go.work"
+      - "go.work.sum"
+  pull_request:
+    paths:
+      - "sql-driver-manager/**"
+      - "sql-drivers/**"
+      - "go.work"
+      - "go.work.sum"
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test ${{ matrix.module }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - sql-drivers/mssql
+          - sql-drivers/mysql
+          - sql-drivers/oracle
+          - sql-drivers/postgres
+          - sql-drivers/sqlite3
+          - sql-drivers/sqlite-modern
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          cache-dependency-path: |
+            ${{ matrix.module }}/go.mod
+
+      - name: Run tests
+        working-directory: ${{ matrix.module }}
+        run: go test ./...

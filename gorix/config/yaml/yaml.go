@@ -10,7 +10,7 @@ type YAMLValue = any
 func ParseYAML(content string) map[string]YAMLValue {
 	root := make(map[string]YAMLValue)
 
-	lines := normalizeYAMLLines(content)
+	lines := NormalizeYAMLLines(content)
 
 	type stackItem struct {
 		indent int
@@ -47,7 +47,7 @@ func ParseYAML(content string) map[string]YAMLValue {
 			continue
 		}
 
-		key, value, hasValue := splitYAMLKeyValue(trimmed)
+		key, value, hasValue := SplitYAMLKeyValue(trimmed)
 		if key == "" {
 			continue
 		}
@@ -73,7 +73,7 @@ func ParseYAML(content string) map[string]YAMLValue {
 			continue
 		}
 
-		parent[key] = parseScalarOrInline(value)
+		parent[key] = ParseScalarOrInline(value)
 	}
 
 	return root

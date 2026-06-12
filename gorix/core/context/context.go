@@ -43,6 +43,9 @@ func Background() *Context {
 func (c *Context) IsCommitted() bool {
 	return c.committed
 }
+func (c *Context) Params() map[string]string {
+	return c.params
+}
 
 func TODO() *Context {
 	return &Context{

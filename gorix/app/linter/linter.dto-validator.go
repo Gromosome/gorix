@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func validateDTOFile(path string) error {
+func ValidateDTOFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err

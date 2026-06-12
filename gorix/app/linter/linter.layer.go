@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func validateControllerFile(path string) error {
+func ValidateControllerFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func validateControllerFile(path string) error {
 	return nil
 }
 
-func validateModuleFile(path string, folderName string) error {
+func ValidateModuleFile(path string, folderName string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -259,7 +259,7 @@ func validateModuleBasePathSignature(fs *token.FileSet, path string, fn *ast.Fun
 		)
 	}
 
-	returnType := exprString(fn.Type.Results.List[0].Type)
+	returnType := ExprString(fn.Type.Results.List[0].Type)
 	if returnType != "gorix.BasePath" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
 
@@ -297,7 +297,7 @@ func validateModuleControllersSignature(fs *token.FileSet, path string, fn *ast.
 		)
 	}
 
-	returnType := exprString(fn.Type.Results.List[0].Type)
+	returnType := ExprString(fn.Type.Results.List[0].Type)
 	if returnType != "[]any" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
 
@@ -335,7 +335,7 @@ func validateModuleProvidersSignature(fs *token.FileSet, path string, fn *ast.Fu
 		)
 	}
 
-	returnType := exprString(fn.Type.Results.List[0].Type)
+	returnType := ExprString(fn.Type.Results.List[0].Type)
 	if returnType != "[]any" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
 
@@ -350,7 +350,7 @@ func validateModuleProvidersSignature(fs *token.FileSet, path string, fn *ast.Fu
 	return nil
 }
 
-func validateServiceFile(path string) error {
+func ValidateServiceFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -452,9 +452,9 @@ func validateControllerReceiverReturn(fs *token.FileSet, path string, fn *ast.Fu
 		)
 	}
 
-	first := exprString(fn.Type.Results.List[0].Type)
-	second := exprString(fn.Type.Results.List[1].Type)
-	third := exprString(fn.Type.Results.List[2].Type)
+	first := ExprString(fn.Type.Results.List[0].Type)
+	second := ExprString(fn.Type.Results.List[1].Type)
+	third := ExprString(fn.Type.Results.List[2].Type)
 
 	if first != "gorix.Method" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
@@ -521,5 +521,5 @@ func isServiceConstructor(fn *ast.FuncDecl, structName string) bool {
 		return false
 	}
 
-	return exprString(fn.Type.Results.List[0].Type) == "*"+structName
+	return ExprString(fn.Type.Results.List[0].Type) == "*"+structName
 }

@@ -30,8 +30,8 @@ func matchAnyPattern(path string, patterns []string) bool {
 }
 
 func matchPattern(path string, pattern string) bool {
-	path = normalizePath(path)
-	pattern = normalizePath(pattern)
+	path = NormalizePath(path)
+	pattern = NormalizePath(pattern)
 
 	if pattern == "*" || pattern == "/*" {
 		return true
@@ -45,7 +45,7 @@ func matchPattern(path string, pattern string) bool {
 	return path == pattern
 }
 
-func normalizePath(path string) string {
+func NormalizePath(path string) string {
 	if path == "" {
 		return "/"
 	}

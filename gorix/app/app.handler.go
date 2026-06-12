@@ -107,7 +107,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			)
 		}
 
-		fullPath := normalizeRoute(basePath, string(path))
+		fullPath := NormalizeRoute(basePath, string(path))
 		routeKey := string(httpMethod) + " " + fullPath
 
 		if a.routes[routeKey] {
@@ -124,7 +124,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			Controller: controllerName,
 		})
 
-		routeInterceptors := a.resolveInterceptors(fullPath)
+		routeInterceptors := a.ResolveInterceptors(fullPath)
 
 		routeHandler := func(c *context.Context) error {
 			if c.R.Method != string(httpMethod) {
@@ -224,7 +224,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			return c.Status(context.StatusOK).JSON(execCtx.Response)
 		}
 
-		routeMiddlewares := a.resolveMiddlewares(fullPath)
+		routeMiddlewares := a.ResolveMiddlewares(fullPath)
 		finalHandler := hook.ChainMiddlewares(routeHandler, routeMiddlewares...)
 
 		a.routeEntries = append(a.routeEntries, routeEntry{
@@ -239,7 +239,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 
 	return nil
 }
-func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
+func (a *App) Dispatch(w http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	var methodNotAllowedRoute *routeEntry
 	var methodNotAllowedContext *context.Context
@@ -249,7 +249,7 @@ func (a *App) dispatch(w http.ResponseWriter, r *http.Request) {
 	bestScore := -1
 	//Register Routes based on Route Scoring
 	for _, route := range a.routeEntries {
-		matched, params, score := matchRoute(route.Path, requestPath)
+		matched, params, score := MatchRoute(route.Path, requestPath)
 		if !matched {
 			continue
 		}
@@ -324,12 +324,12 @@ Route priority is determined by scoring each path segment.
 	    Routes with higher scores are matched first, preventing a dynamic route
 		such as /user/:id from incorrectly capturing /user/summary, regardless
 */
-func matchRoute(pattern string, actualPath string) (bool, map[string]string, int) {
+func MatchRoute(pattern string, actualPath string) (bool, map[string]string, int) {
 	pattern = normalizeRoutePath(pattern)
 	actualPath = normalizeRoutePath(actualPath)
 
-	patternParts := splitRoutePath(pattern)
-	actualParts := splitRoutePath(actualPath)
+	patternParts := SplitRoutePath(pattern)
+	actualParts := SplitRoutePath(actualPath)
 
 	if len(patternParts) != len(actualParts) {
 		return false, nil, 0
@@ -359,7 +359,7 @@ func matchRoute(pattern string, actualPath string) (bool, map[string]string, int
 	return true, params, score
 }
 
-func splitRoutePath(path string) []string {
+func SplitRoutePath(path string) []string {
 	path = normalizeRoutePath(path)
 
 	if path == "/" {
@@ -391,7 +391,7 @@ func normalizeRoutePath(path string) string {
 	return path
 }
 func (a *App) handleException(ctx *hook.ExceptionContext) {
-	filters := a.resolveFilters(ctx.Path)
+	filters := a.ResolveFilters(ctx.Path)
 
 	if len(filters) == 0 {
 		_ = ctx.Context.Status(ctx.StatusCode).JSON(map[string]any{
@@ -408,7 +408,7 @@ func (a *App) handleException(ctx *hook.ExceptionContext) {
 	}
 }
 
-func (a *App) resolveMiddlewares(path string) []hook.Middleware {
+func (a *App) ResolveMiddlewares(path string) []hook.Middleware {
 	result := make([]hook.Middleware, 0)
 
 	for _, item := range a.middlewares {
@@ -420,7 +420,7 @@ func (a *App) resolveMiddlewares(path string) []hook.Middleware {
 	return result
 }
 
-func (a *App) resolveInterceptors(path string) []hook.Interceptor {
+func (a *App) ResolveInterceptors(path string) []hook.Interceptor {
 	result := make([]hook.Interceptor, 0)
 
 	for _, item := range a.interceptors {
@@ -432,7 +432,7 @@ func (a *App) resolveInterceptors(path string) []hook.Interceptor {
 	return result
 }
 
-func (a *App) resolveFilters(path string) []hook.Filter {
+func (a *App) ResolveFilters(path string) []hook.Filter {
 	result := make([]hook.Filter, 0)
 
 	for _, item := range a.filters {
@@ -444,7 +444,7 @@ func (a *App) resolveFilters(path string) []hook.Filter {
 	return result
 }
 
-func normalizeRoute(basePath string, path string) string {
+func NormalizeRoute(basePath string, path string) string {
 	basePath = "/" + strings.Trim(basePath, "/")
 	path = "/" + strings.Trim(path, "/")
 

@@ -84,6 +84,9 @@ func NewApp() *App {
 		filters:      make([]hook.FilterConfig, 0),
 	}
 }
+func (a *App) RouteEntries() []routeEntry {
+	return a.routeEntries
+}
 func (a *App) Use(items ...any) {
 	for _, item := range items {
 		switch v := item.(type) {
@@ -205,6 +208,6 @@ func (a *App) TryListen(addr string) error {
 
 	return http.ListenAndServe(
 		addr,
-		http.HandlerFunc(a.dispatch),
+		http.HandlerFunc(a.Dispatch),
 	)
 }

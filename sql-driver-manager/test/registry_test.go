@@ -1,20 +1,22 @@
-package sql_driver_manager
+package test
 
 import (
 	"errors"
 	"testing"
+
+	"github.com/Gromosome/gorix/sql-driver-manager"
 )
 
 type testAdapter struct{}
 
 func (testAdapter) Name() string          { return "test" }
 func (testAdapter) SQLDriverName() string { return "test-sql-driver" }
-func (testAdapter) Normalize(err error) *Error {
+func (testAdapter) Normalize(err error) *sql_driver_manager.Error {
 	if err == nil {
 		return nil
 	}
-	return &Error{
-		Kind:    ErrorUnknown,
+	return &sql_driver_manager.Error{
+		Kind:    sql_driver_manager.ErrorUnknown,
 		Driver:  "test",
 		Message: err.Error(),
 		Cause:   err,
@@ -22,9 +24,9 @@ func (testAdapter) Normalize(err error) *Error {
 }
 
 func TestRegisterAndLookup(t *testing.T) {
-	Register(testAdapter{})
+	sql_driver_manager.Register(testAdapter{})
 
-	adapter, err := Lookup("test")
+	adapter, err := sql_driver_manager.Lookup("test")
 	if err != nil {
 		t.Fatalf("Lookup returned error: %v", err)
 	}

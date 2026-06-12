@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func parseScalarOrInline(value string) YAMLValue {
+func ParseScalarOrInline(value string) YAMLValue {
 	value = strings.TrimSpace(value)
 	value = expandEnvVars(value)
 
@@ -79,12 +79,12 @@ func parseInlineList(value string) []YAMLValue {
 		return []YAMLValue{}
 	}
 
-	parts := splitCommaAware(value)
+	parts := SplitCommaAware(value)
 
 	result := make([]YAMLValue, 0, len(parts))
 
 	for _, part := range parts {
-		result = append(result, parseScalarOrInline(strings.TrimSpace(part)))
+		result = append(result, ParseScalarOrInline(strings.TrimSpace(part)))
 	}
 
 	return result
@@ -100,20 +100,20 @@ func parseInlineMap(value string) map[string]YAMLValue {
 		return result
 	}
 
-	parts := splitCommaAware(value)
+	parts := SplitCommaAware(value)
 
 	for _, part := range parts {
-		key, val, ok := splitYAMLKeyValue(strings.TrimSpace(part))
+		key, val, ok := SplitYAMLKeyValue(strings.TrimSpace(part))
 		if !ok {
 			continue
 		}
 
-		result[key] = parseScalarOrInline(val)
+		result[key] = ParseScalarOrInline(val)
 	}
 
 	return result
 }
-func splitCommaAware(value string) []string {
+func SplitCommaAware(value string) []string {
 	parts := make([]string, 0)
 
 	inSingleQuote := false

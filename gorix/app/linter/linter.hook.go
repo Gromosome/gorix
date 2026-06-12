@@ -6,7 +6,7 @@ import (
 	"go/token"
 )
 
-func validateMiddlewareFile(path string) error {
+func ValidateMiddlewareFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func validateMiddlewareFile(path string) error {
 			continue
 		}
 
-		returnType := exprString(fn.Type.Results.List[0].Type)
+		returnType := ExprString(fn.Type.Results.List[0].Type)
 		if returnType == "gorix.Middleware" {
 			hasMiddlewareFactory = true
 			factoryNode = fn
@@ -57,7 +57,7 @@ func validateMiddlewareFile(path string) error {
 	return nil
 }
 
-func validateInterceptorFile(path string) error {
+func ValidateInterceptorFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func validateBeforeAfterSignature(fs *token.FileSet, path string, fn *ast.FuncDe
 		)
 	}
 
-	paramType := exprString(fn.Type.Params.List[0].Type)
+	paramType := ExprString(fn.Type.Params.List[0].Type)
 	if paramType != "*gorix.ExecutionContext" {
 		line, col := positionOf(fs, fn.Type.Params.List[0].Type)
 
@@ -191,7 +191,7 @@ func validateBeforeAfterSignature(fs *token.FileSet, path string, fn *ast.FuncDe
 		)
 	}
 
-	resultType := exprString(fn.Type.Results.List[0].Type)
+	resultType := ExprString(fn.Type.Results.List[0].Type)
 	if resultType != "error" {
 		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
 
@@ -206,7 +206,7 @@ func validateBeforeAfterSignature(fs *token.FileSet, path string, fn *ast.FuncDe
 	return nil
 }
 
-func validateFilterFile(path string) error {
+func ValidateFilterFile(path string) error {
 	fs, file, err := parseGoFile(path)
 	if err != nil {
 		return err
@@ -299,7 +299,7 @@ func validateCatchSignature(fs *token.FileSet, path string, fn *ast.FuncDecl) er
 		)
 	}
 
-	paramType := exprString(fn.Type.Params.List[0].Type)
+	paramType := ExprString(fn.Type.Params.List[0].Type)
 	if paramType != "*gorix.ExceptionContext" {
 		line, col := positionOf(fs, fn.Type.Params.List[0].Type)
 

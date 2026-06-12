@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-func splitYAMLKeyValue(line string) (key string, value string, hasValue bool) {
+func SplitYAMLKeyValue(line string) (key string, value string, hasValue bool) {
 	inSingleQuote := false
 	inDoubleQuote := false
 

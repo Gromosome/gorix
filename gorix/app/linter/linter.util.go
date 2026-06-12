@@ -61,7 +61,7 @@ func receiverIsSameStruct(fn *ast.FuncDecl, structName string) bool {
 		return false
 	}
 
-	recvType := exprString(fn.Recv.List[0].Type)
+	recvType := ExprString(fn.Recv.List[0].Type)
 
 	return recvType == structName || recvType == "*"+structName
 }
@@ -72,7 +72,7 @@ func returnsType(fn *ast.FuncDecl, typeName string) bool {
 	}
 
 	for _, result := range fn.Type.Results.List {
-		if exprString(result.Type) == typeName {
+		if ExprString(result.Type) == typeName {
 			return true
 		}
 	}
@@ -86,7 +86,7 @@ func returnsPointerType(fn *ast.FuncDecl, typeName string) bool {
 	}
 
 	for _, result := range fn.Type.Results.List {
-		if exprString(result.Type) == "*"+typeName {
+		if ExprString(result.Type) == "*"+typeName {
 			return true
 		}
 	}
@@ -94,22 +94,22 @@ func returnsPointerType(fn *ast.FuncDecl, typeName string) bool {
 	return false
 }
 
-func exprString(expr ast.Expr) string {
+func ExprString(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
 
 	case *ast.StarExpr:
-		return "*" + exprString(t.X)
+		return "*" + ExprString(t.X)
 
 	case *ast.SelectorExpr:
-		return exprString(t.X) + "." + t.Sel.Name
+		return ExprString(t.X) + "." + t.Sel.Name
 
 	case *ast.ArrayType:
-		return "[]" + exprString(t.Elt)
+		return "[]" + ExprString(t.Elt)
 
 	case *ast.MapType:
-		return "map[" + exprString(t.Key) + "]" + exprString(t.Value)
+		return "map[" + ExprString(t.Key) + "]" + ExprString(t.Value)
 
 	case *ast.InterfaceType:
 		return "interface{}"

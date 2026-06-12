@@ -63,10 +63,10 @@ func parseBlockList(lines []string, index *int, parentIndent int) []YAMLValue {
 			continue
 		}
 
-		key, value, hasValue := splitYAMLKeyValue(itemRaw)
+		key, value, hasValue := SplitYAMLKeyValue(itemRaw)
 		if hasValue && key != "" {
 			itemMap := make(map[string]YAMLValue)
-			itemMap[key] = parseScalarOrInline(value)
+			itemMap[key] = ParseScalarOrInline(value)
 
 			childMap, nextIndex := parseNestedMapForListItem(lines, i+1, indent)
 			for k, v := range childMap {
@@ -78,7 +78,7 @@ func parseBlockList(lines []string, index *int, parentIndent int) []YAMLValue {
 			continue
 		}
 
-		result = append(result, parseScalarOrInline(itemRaw))
+		result = append(result, ParseScalarOrInline(itemRaw))
 		i++
 	}
 
@@ -111,14 +111,14 @@ func parseNestedMapForListItem(lines []string, start int, listItemIndent int) (m
 			break
 		}
 
-		key, value, hasValue := splitYAMLKeyValue(trimmed)
+		key, value, hasValue := SplitYAMLKeyValue(trimmed)
 		if key == "" {
 			i++
 			continue
 		}
 
 		if hasValue {
-			result[key] = parseScalarOrInline(value)
+			result[key] = ParseScalarOrInline(value)
 			i++
 			continue
 		}

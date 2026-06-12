@@ -2,14 +2,14 @@ package yaml
 
 import "strings"
 
-func normalizeYAMLLines(content string) []string {
+func NormalizeYAMLLines(content string) []string {
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	rawLines := strings.Split(content, "\n")
 
 	lines := make([]string, 0, len(rawLines))
 
 	for _, line := range rawLines {
-		line = removeYAMLComment(line)
+		line = RemoveYAMLComment(line)
 
 		if strings.TrimSpace(line) == "" {
 			lines = append(lines, "")
@@ -22,7 +22,7 @@ func normalizeYAMLLines(content string) []string {
 	return lines
 }
 
-func removeYAMLComment(line string) string {
+func RemoveYAMLComment(line string) string {
 	inSingleQuote := false
 	inDoubleQuote := false
 
