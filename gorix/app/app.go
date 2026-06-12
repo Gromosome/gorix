@@ -175,6 +175,7 @@ func (a *App) TryRegisterModules(modules ...any) error {
 }
 
 func (a *App) TryListen(addr string) error {
+	printGorixLogo()
 	if !a.config.IsProd() {
 		if err := linter.ValidateProject(a.projectRoot); err != nil {
 			return err
@@ -210,4 +211,30 @@ func (a *App) TryListen(addr string) error {
 		addr,
 		http.HandlerFunc(a.Dispatch),
 	)
+}
+func printGorixLogo() {
+	// ANSI 24-bit TrueColor sequences for a perfectly smooth 6-step gradient
+	const t1 = "\033[38;2;255;170;0m" // Bright golden orange (Top)
+	const t2 = "\033[38;2;255;145;0m" // Light orange
+	const t3 = "\033[38;2;245;115;0m" // Medium orange
+	const t4 = "\033[38;2;230;85;0m"  // Rich orange
+	const t5 = "\033[38;2;210;55;0m"  // Deep orange
+	const t6 = "\033[38;2;180;35;0m"  // Dark burnished shadow (Bottom)
+	const reset = "\033[0m"
+
+	// Bold, clean, symmetrical geometric typography
+	fmt.Print(t1)
+	fmt.Println(`   ▄██████▄       ▄██████▄     ████████▄     ███    ███      ███ `)
+	fmt.Print(t2)
+	fmt.Println(`  ███    ███     ███    ███    ███    ███    ███      ███  ███   `)
+	fmt.Print(t3)
+	fmt.Println(`  ███            ███    ███    ████████▀     ███        ████     `)
+	fmt.Print(t4)
+	fmt.Println(`  ███  █████     ███    ███    ███   ███▄    ███        ████     `)
+	fmt.Print(t5)
+	fmt.Println(`  ███    ███     ███    ███    ███    ███    ███      ███  ███   `)
+	fmt.Print(t6)
+	fmt.Println(`   ▀██████▀       ▀██████▀     ███    ███    ███    ███      ███ `)
+
+	fmt.Print(reset)
 }

@@ -56,6 +56,7 @@ gorix:
       max-idle-connections: 7
       connection-max-lifetime: 1h
       connection-max-idle-time: 5m
+      ping-timeout: 2s
 `)
 	if err := os.WriteFile(filepath.Join(dir, "application.yaml"), content, 0o600); err != nil {
 		t.Fatalf("failed to write config file: %v", err)
@@ -77,6 +78,9 @@ gorix:
 	}
 	if cfg.Gorix.Databases["primary"].DSN != "postgres://localhost/app" {
 		t.Fatalf("unexpected database config: %#v", cfg.Gorix.Databases["primary"])
+	}
+	if cfg.Gorix.Databases["primary"].PingTimeout != "2s" {
+		t.Fatalf("unexpected database ping timeout: %#v", cfg.Gorix.Databases["primary"])
 	}
 }
 

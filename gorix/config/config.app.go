@@ -180,6 +180,7 @@ func loadDatabaseConfigs(
 			MaxIdleConnections:    yaml.GetInt(source, "max-idle-connections", 0),
 			ConnectionMaxLifetime: yaml.GetString(source, "connection-max-lifetime", ""),
 			ConnectionMaxIdleTime: yaml.GetString(source, "connection-max-idle-time", ""),
+			PingTimeout:           yaml.GetString(source, "ping-timeout", ""),
 		}
 	}
 
