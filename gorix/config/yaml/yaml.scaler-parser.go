@@ -168,5 +168,37 @@ func splitCommaAware(value string) []string {
 	return parts
 }
 func expandEnvVars(value string) string {
-	return os.ExpandEnv(value)
+	return os.Expand(
+		value,
+		func(expression string) string {
+			key, fallback, hasFallback, emptyUsesFallback := splitEnvExpression(expression)
+			envValue, found := os.LookupEnv(key)
+			if hasFallback && (!found || emptyUsesFallback && envValue == "") {
+				return expandEnvVars(fallback)
+			}
+
+			if found {
+				return envValue
+			}
+
+			return os.Getenv(key)
+		},
+	)
+}
+
+func splitEnvExpression(expression string) (
+	key string,
+	fallback string,
+	hasFallback bool,
+	emptyUsesFallback bool,
+) {
+	if key, fallback, found := strings.Cut(expression, ":-"); found {
+		return key, fallback, true, true
+	}
+
+	if key, fallback, found := strings.Cut(expression, "-"); found {
+		return key, fallback, true, false
+	}
+
+	return expression, "", false, false
 }

@@ -1,6 +1,7 @@
+env: ""
 gorix:
   app:
-    port: 8080
+    port: ${GORIX_PORT:-8070}
     prod: false
   databases:
     default:
