@@ -4,7 +4,22 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	sqldriver "github.com/Gromosome/gorix/sql-driver-manager"
 )
+
+func NewRows(native *sqldriver.Rows) *Rows {
+	return &Rows{native: native}
+}
+func NewRow(native *sqldriver.Row) *Row {
+	return &Row{native: native}
+}
+func NewErrRows(err error) *Rows {
+	return &Rows{err: err}
+}
+func NewErrRow(err error) *Row {
+	return &Row{err: err}
+}
 
 func (r *Rows) Next() bool {
 	if r == nil || r.err != nil || r.native == nil {

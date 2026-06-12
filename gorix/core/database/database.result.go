@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -8,8 +9,12 @@ func (r Result) Err() error {
 	return r.err
 }
 
-func ErrResult(err error) Result {
+func NewErrResult(err error) Result {
 	return Result{err: err}
+}
+
+func NewResult(native sql.Result) Result {
+	return Result{native: native}
 }
 
 func (r Result) LastInsertID() (

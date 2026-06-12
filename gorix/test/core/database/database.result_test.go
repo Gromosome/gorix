@@ -16,7 +16,7 @@ func (r fakeSQLResult) LastInsertId() (int64, error) { return r.lastInsertID, ni
 func (r fakeSQLResult) RowsAffected() (int64, error) { return r.rowsAffected, nil }
 
 func TestResultReturnsNativeValues(t *testing.T) {
-	result := database2.Result{native: fakeSQLResult{lastInsertID: 10, rowsAffected: 2}}
+	result := database2.NewResult(fakeSQLResult{lastInsertID: 10, rowsAffected: 2})
 
 	id, err := result.LastInsertID()
 	if err != nil {
@@ -37,7 +37,7 @@ func TestResultReturnsNativeValues(t *testing.T) {
 
 func TestResultReturnsStoredError(t *testing.T) {
 	cause := errors.New("failed")
-	result := database2.ErrResult(cause)
+	result := database2.NewErrResult(cause)
 
 	if _, err := result.LastInsertID(); !errors.Is(err, cause) {
 		t.Fatalf("LastInsertID did not return stored error: %v", err)

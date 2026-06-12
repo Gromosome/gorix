@@ -124,12 +124,12 @@ func (m *Mapper) Exec(
 	args ...any,
 ) database.Result {
 	if err := validateMapperContext(ctx); err != nil {
-		return database.ErrResult(err)
+		return database.NewErrResult(err)
 	}
 
 	db, err := m.DB()
 	if err != nil {
-		return database.ErrResult(err)
+		return database.NewErrResult(err)
 	}
 
 	return Exec(
@@ -229,7 +229,7 @@ func (m *Mapper) ExecNamed(
 ) database.Result {
 	query, err := m.Statement(statementName)
 	if err != nil {
-		return database.ErrResult(err)
+		return database.NewErrResult(err)
 	}
 
 	return m.Exec(

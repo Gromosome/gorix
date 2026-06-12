@@ -260,14 +260,14 @@ func ExecNamed(
 	args ...any,
 ) database.Result {
 	if registry == nil {
-		return database.ErrResult(fmt.Errorf(
+		return database.NewErrResult(fmt.Errorf(
 			"gorix mapper: statement registry cannot be nil",
 		))
 	}
 
 	query, err := registry.Get(statementName)
 	if err != nil {
-		return database.ErrResult(err)
+		return database.NewErrResult(err)
 	}
 
 	return Exec(

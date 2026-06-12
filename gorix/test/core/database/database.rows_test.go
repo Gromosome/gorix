@@ -33,7 +33,7 @@ func TestNilRowsAndRowReturnErrors(t *testing.T) {
 
 func TestRowsAndRowReturnStoredErrors(t *testing.T) {
 	cause := errors.New("failed")
-	rows := &database2.Rows{err: cause}
+	rows := database2.NewErrRows(cause)
 	if rows.Next() {
 		t.Fatal("errored rows should not advance")
 	}
@@ -47,7 +47,7 @@ func TestRowsAndRowReturnStoredErrors(t *testing.T) {
 		t.Fatalf("Err did not return stored error: %v", err)
 	}
 
-	row := &database2.Row{err: cause}
+	row := database2.NewErrRow(cause)
 	if err := row.Scan(); !errors.Is(err, cause) {
 		t.Fatalf("row Scan did not return stored error: %v", err)
 	}
