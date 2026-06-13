@@ -1,3 +1,14 @@
+<p align="center">
+  <img src="https://www.cdn.gromosome.com/main/img/logos/gromo-framework/Gorix.png" alt="Gorix logo" width="180">
+</p>
+
+<p align="center">
+  <a href="https://paypal.me/PressnaveKiruparaj?locale.x=en_US&amp;country.x=AE"><img src="https://img.shields.io/badge/PayPal-Support-blue?logo=paypal" alt="Support on PayPal"></a>
+  <a href="https://opencollective.com/gorix"><img src="https://img.shields.io/badge/OpenCollective-Gorix-7FADF2?logo=opencollective" alt="Support Gorix on Open Collective"></a>
+  <a href="https://pkg.go.dev/github.com/Gromosome/gorix/gorix"><img src="https://pkg.go.dev/badge/github.com/Gromosome/gorix/gorix.svg" alt="Go Reference"></a>
+  <a href="https://github.com/Gromosome/gorix/actions"><img src="https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?logo=githubactions" alt="GitHub Actions CI/CD"></a>
+</p>
+
 # Gorix SQL Driver Adapters
 
 `sql-drivers` contains adapter modules that register database drivers with `github.com/Gromosome/gorix/sql-driver-manager`.
@@ -14,14 +25,14 @@ Then configure the matching logical driver name in `application.yaml`.
 
 ## Available Drivers
 
-| Adapter module | Logical driver | SQL driver name | Underlying driver |
-| --- | --- | --- | --- |
-| `github.com/Gromosome/gorix/sql-drivers/postgres` | `postgres` | `pgx` | `github.com/jackc/pgx/v5/stdlib` |
-| `github.com/Gromosome/gorix/sql-drivers/mysql` | `mysql` | `mysql` | `github.com/go-sql-driver/mysql` |
-| `github.com/Gromosome/gorix/sql-drivers/sqlite3` | `sqlite3` | `sqlite3` | `github.com/mattn/go-sqlite3` |
-| `github.com/Gromosome/gorix/sql-drivers/sqlite-modern` | `sqlite-modern` | `sqlite` | `modernc.org/sqlite` |
-| `github.com/Gromosome/gorix/sql-drivers/mssql` | `mssql` | `sqlserver` | `github.com/microsoft/go-mssqldb` |
-| `github.com/Gromosome/gorix/sql-drivers/oracle` | `oracle` | `godror` | `github.com/godror/godror` |
+| Adapter module | Logical driver | SQL driver name | Mapper module | Mapper version | Underlying driver | Driver version |
+| --- | --- | --- | --- | --- | --- | --- |
+| `github.com/Gromosome/gorix/sql-drivers/postgres` | `postgres` | `pgx` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `github.com/jackc/pgx/v5` | `v5.7.6` |
+| `github.com/Gromosome/gorix/sql-drivers/mysql` | `mysql` | `mysql` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `github.com/go-sql-driver/mysql` | `v1.9.3` |
+| `github.com/Gromosome/gorix/sql-drivers/sqlite3` | `sqlite3` | `sqlite3` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `github.com/mattn/go-sqlite3` | `v1.14.32` |
+| `github.com/Gromosome/gorix/sql-drivers/sqlite-modern` | `sqlite-modern` | `sqlite` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `modernc.org/sqlite` | `v1.39.1` |
+| `github.com/Gromosome/gorix/sql-drivers/mssql` | `mssql` | `sqlserver` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `github.com/microsoft/go-mssqldb` | `v1.9.3` |
+| `github.com/Gromosome/gorix/sql-drivers/oracle` | `oracle` | `godror` | `github.com/Gromosome/gorix/sql-driver-manager` | `v1.0.0` | `github.com/godror/godror` | `v0.49.4` |
 
 ## Configuration Examples
 
