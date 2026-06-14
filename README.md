@@ -95,3 +95,10 @@ If `env` is empty, Gorix optionally loads `.env`. If `env: local`, Gorix require
 - SQL driver manager: `sql-driver-manager/README.md`
 - SQL driver adapters: `sql-drivers/README.md`
 - Reference implementation: `impl-test`
+
+## Community
+
+- Contributing guide: `CONTRIBUTING.md`
+- Code of conduct: `CODE_OF_CONDUCT.md`
+- Security reports: `SECURITY.md`
+- Funding: <https://opencollective.com/gorix>

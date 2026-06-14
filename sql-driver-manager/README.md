@@ -129,3 +129,12 @@ if sqldriver.IsKind(err, sqldriver.ErrorTimeout) {
 - `Close`
 
 Rows, row scans, statements, transactions, commits, rollbacks, and close operations are normalized through the same adapter.
+
+## Community
+
+This module follows the repository-level contribution, conduct, and security policies:
+
+- Contributing guide: `../CONTRIBUTING.md`
+- Code of conduct: `../CODE_OF_CONDUCT.md`
+- Security reports: `../SECURITY.md`
+- Funding: <https://opencollective.com/gorix>
