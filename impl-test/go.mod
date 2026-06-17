@@ -1,6 +1,6 @@
 module github.com/Gromosome/gorix/impl-test
 
-go 1.26
+go 1.25
 
 require github.com/Gromosome/gorix/gorix v1.0.0
 require github.com/Gromosome/gorix/sql-drivers/postgres v1.0.0
