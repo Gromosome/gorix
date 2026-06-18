@@ -10,9 +10,9 @@ import (
 	"os"
 )
 
-func (c *Context) getStatus() int {
+func (c *Context) getStatusOrDefault(status StatusCode) int {
 	if c == nil || c.status == 0 {
-		return StatusOK.Int()
+		return status.Int()
 	}
 	return c.status.Int()
 }
@@ -39,7 +39,7 @@ func (c *Context) JSON(data any) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", "application/json")
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	if err := json.NewEncoder(c.W).Encode(data); err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (c *Context) XML(data any) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	if err := xml.NewEncoder(c.W).Encode(data); err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (c *Context) Text(data string) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	_, err := c.W.Write([]byte(data))
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (c *Context) HTML(data string) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	_, err := c.W.Write([]byte(data))
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func (c *Context) Template(tpl string, data any) error {
 	}
 
 	c.W.Header().Set("Content-Type", "text/html; charset=utf-8")
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	if err := t.Execute(c.W, data); err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (c *Context) Blob(contentType string, data []byte) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", contentType)
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	_, err := c.W.Write(data)
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func (c *Context) Stream(contentType string, reader io.Reader) error {
 		)
 	}
 	c.W.Header().Set("Content-Type", contentType)
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(200)))
 	if _, err := io.Copy(c.W, reader); err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func (c *Context) Redirect(url string) error {
 			"gorix context: response writer or request is unavailable",
 		)
 	}
-	http.Redirect(c.W, c.R, url, c.getStatus())
+	http.Redirect(c.W, c.R, url, c.getStatusOrDefault(302))
 	c.committed = true
 	return nil
 }
@@ -241,7 +241,7 @@ func (c *Context) NoContent() error {
 			"gorix context: response writer is unavailable",
 		)
 	}
-	c.W.WriteHeader(c.getStatus())
+	c.W.WriteHeader(c.getStatusOrDefault(StatusCode(204)))
 	c.committed = true
 	return nil
 }
