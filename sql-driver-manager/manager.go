@@ -3,6 +3,7 @@ package sql_driver_manager
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 type Manager struct {
@@ -145,16 +146,38 @@ func (m *Manager) WithTx(
 	ctx context.Context,
 	options *sql.TxOptions,
 	execute func(*Tx) error,
-) error {
+) (err error) {
 	tx, err := m.BeginTx(ctx, options)
 	if err != nil {
 		return err
 	}
 
-	if err = execute(tx); err != nil {
-		_ = tx.Rollback()
-		return m.Normalize(err)
+	rollback := true
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			if rollback {
+				_ = tx.Rollback()
+			}
+			panic(recovered)
+		}
+
+		if !rollback {
+			return
+		}
+
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			if err != nil {
+				err = errors.Join(err, rollbackErr)
+				return
+			}
+			err = rollbackErr
+		}
+	}()
+
+	if callbackErr := execute(tx); callbackErr != nil {
+		return callbackErr
 	}
 
+	rollback = false
 	return tx.Commit()
 }
