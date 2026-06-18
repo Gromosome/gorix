@@ -1,4 +1,4 @@
-package sql_driver_manager
+package test
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+
+	"github.com/Gromosome/gorix/sql-driver-manager"
 )
 
 var txTestDriverID atomic.Uint64
@@ -92,19 +94,19 @@ type txTestAdapter struct{ driverName string }
 
 func (a txTestAdapter) Name() string          { return "tx-test" }
 func (a txTestAdapter) SQLDriverName() string { return a.driverName }
-func (a txTestAdapter) Normalize(err error) *Error {
+func (a txTestAdapter) Normalize(err error) *sql_driver_manager.Error {
 	if err == nil {
 		return nil
 	}
-	return &Error{
-		Kind:    ErrorUnknown,
+	return &sql_driver_manager.Error{
+		Kind:    sql_driver_manager.ErrorUnknown,
 		Driver:  a.Name(),
 		Message: "normalized: " + err.Error(),
 		Cause:   err,
 	}
 }
 
-func newTxTestManager(t *testing.T, state *txTestState) *Manager {
+func newTxTestManager(t *testing.T, state *txTestState) *sql_driver_manager.Manager {
 	t.Helper()
 
 	driverName := fmt.Sprintf("gorix_tx_test_%d", txTestDriverID.Add(1))
@@ -116,10 +118,7 @@ func newTxTestManager(t *testing.T, state *txTestState) *Manager {
 	}
 	t.Cleanup(func() { _ = db.Close() })
 
-	return &Manager{
-		db:      db,
-		adapter: txTestAdapter{driverName: driverName},
-	}
+	return sql_driver_manager.NewManager(db, txTestAdapter{driverName: driverName})
 }
 
 func TestWithTxReturnsCallbackErrorWithoutNormalizing(t *testing.T) {
@@ -127,14 +126,14 @@ func TestWithTxReturnsCallbackErrorWithoutNormalizing(t *testing.T) {
 	manager := newTxTestManager(t, state)
 	domainErr := errors.New("domain validation failed")
 
-	err := manager.WithTx(context.Background(), nil, func(*Tx) error {
+	err := manager.WithTx(context.Background(), nil, func(*sql_driver_manager.Tx) error {
 		return domainErr
 	})
 
 	if !errors.Is(err, domainErr) {
 		t.Fatalf("expected callback error, got %v", err)
 	}
-	if _, ok := AsError(err); ok {
+	if _, ok := sql_driver_manager.AsError(err); ok {
 		t.Fatalf("expected domain error to remain unnormalized, got %T", err)
 	}
 
@@ -161,7 +160,7 @@ func TestWithTxPanicRollsBackAndRepanics(t *testing.T) {
 		}
 	}()
 
-	_ = manager.WithTx(context.Background(), nil, func(*Tx) error {
+	_ = manager.WithTx(context.Background(), nil, func(*sql_driver_manager.Tx) error {
 		panic(panicValue)
 	})
 }
@@ -172,7 +171,7 @@ func TestWithTxReturnsCallbackAndRollbackErrors(t *testing.T) {
 	manager := newTxTestManager(t, state)
 	domainErr := errors.New("domain validation failed")
 
-	err := manager.WithTx(context.Background(), nil, func(*Tx) error {
+	err := manager.WithTx(context.Background(), nil, func(*sql_driver_manager.Tx) error {
 		return domainErr
 	})
 
@@ -182,7 +181,7 @@ func TestWithTxReturnsCallbackAndRollbackErrors(t *testing.T) {
 	if !errors.Is(err, rollbackCause) {
 		t.Fatalf("expected rollback cause in result, got %v", err)
 	}
-	normalizedErr, ok := AsError(err)
+	normalizedErr, ok := sql_driver_manager.AsError(err)
 	if !ok {
 		t.Fatalf("expected normalized rollback error in result, got %T", err)
 	}
@@ -201,7 +200,7 @@ func TestWithTxReturnsNormalizedDatabaseOperationError(t *testing.T) {
 	state := &txTestState{execErr: execCause}
 	manager := newTxTestManager(t, state)
 
-	err := manager.WithTx(context.Background(), nil, func(tx *Tx) error {
+	err := manager.WithTx(context.Background(), nil, func(tx *sql_driver_manager.Tx) error {
 		_, err := tx.ExecContext(context.Background(), "insert into users(id) values(?)", 1)
 		return err
 	})
@@ -209,7 +208,7 @@ func TestWithTxReturnsNormalizedDatabaseOperationError(t *testing.T) {
 	if !errors.Is(err, execCause) {
 		t.Fatalf("expected exec cause in result, got %v", err)
 	}
-	normalizedErr, ok := AsError(err)
+	normalizedErr, ok := sql_driver_manager.AsError(err)
 	if !ok {
 		t.Fatalf("expected normalized database operation error, got %T", err)
 	}
@@ -228,14 +227,14 @@ func TestWithTxReturnsNormalizedCommitError(t *testing.T) {
 	state := &txTestState{commitErr: commitCause}
 	manager := newTxTestManager(t, state)
 
-	err := manager.WithTx(context.Background(), nil, func(*Tx) error {
+	err := manager.WithTx(context.Background(), nil, func(*sql_driver_manager.Tx) error {
 		return nil
 	})
 
 	if !errors.Is(err, commitCause) {
 		t.Fatalf("expected commit cause in result, got %v", err)
 	}
-	normalizedErr, ok := AsError(err)
+	normalizedErr, ok := sql_driver_manager.AsError(err)
 	if !ok {
 		t.Fatalf("expected normalized commit error, got %T", err)
 	}

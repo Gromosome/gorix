@@ -11,6 +11,13 @@ type Manager struct {
 	adapter Adapter
 }
 
+func NewManager(db *sql.DB, adapter Adapter) *Manager {
+	return &Manager{
+		db:      db,
+		adapter: adapter,
+	}
+}
+
 func Open(ctx context.Context, config Config) (*Manager, error) {
 	adapter, err := Lookup(config.Driver)
 	if err != nil {
