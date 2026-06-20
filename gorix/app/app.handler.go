@@ -221,7 +221,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 				}
 			}
 
-			return c.Status(context.StatusOK).JSON(execCtx.Response)
+			return c.Status(context.StatusCode(c.GetStatusOrDefault(context.StatusOK))).JSON(execCtx.Response)
 		}
 
 		routeMiddlewares := a.ResolveMiddlewares(fullPath)

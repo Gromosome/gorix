@@ -91,6 +91,6 @@ func (s *UserService) Update(
 func (s *UserService) Delete(
 	ctx *gorixcontext.Context,
 	id int64,
-) error {
-	return s.userRepository.DeleteByID(ctx, id)
+) (any, error) {
+	return nil, s.userRepository.DeleteByID(ctx, id)
 }

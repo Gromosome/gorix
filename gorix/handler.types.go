@@ -20,6 +20,17 @@ const (
 	PATCH  = context.PATCH
 	DELETE = context.DELETE
 )
+const (
+	ResponseTypeJSON      = context.ResponseTypeJSON
+	ResponseTypeAuto      = context.ResponseTypeAuto
+	ResponseTypeText      = context.ResponseTypeText
+	ResponseTypeHTML      = context.ResponseTypeHTML
+	ResponseTypeFile      = context.ResponseTypeFile
+	ResponseTypeDownload  = context.ResponseTypeDownload
+	ResponseTypeStream    = context.ResponseTypeStream
+	ResponseTypeRedirect  = context.ResponseTypeRedirect
+	ResponseTypeNoContent = context.ResponseTypeNoContent
+)
 
 const (
 	// 1xx Informational

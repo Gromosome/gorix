@@ -32,15 +32,15 @@ func (c *UserController) FindByID() (
 		ctx *gorix.Context,
 	) (any, error) {
 		var params UserPathDto
-
-		if err := ctx.BindParams(&params); err != nil {
-			return nil, err
-		}
-
-		return c.userService.GetByID(
-			ctx,
-			params.ID,
-		)
+		return ctx.
+			BindParams(&params).
+			Status(gorix.StatusOK).
+			ResponseEntityJSON(func() (any, error) {
+				return c.userService.GetByID(
+					ctx,
+					params.ID,
+				)
+			})
 	}
 }
 
@@ -67,15 +67,15 @@ func (c *UserController) FindActive() (
 		query := UserQueryDto{
 			Limit: 20,
 		}
-
-		if err := ctx.BindQuery(&query); err != nil {
-			return nil, err
-		}
-
-		return c.userService.GetActive(
-			ctx,
-			query,
-		)
+		return ctx.
+			BindQuery(&query).
+			Status(gorix.StatusOK).
+			ResponseEntityJSON(func() (any, error) {
+				return c.userService.GetActive(
+					ctx,
+					query,
+				)
+			})
 	}
 }
 
@@ -100,22 +100,15 @@ func (c *UserController) Create() (
 		ctx *gorix.Context,
 	) (any, error) {
 		var body CreateUserDto
-
-		if err := ctx.BindBody(&body); err != nil {
-			return nil, err
-		}
-
-		user, err := c.userService.Create(
-			ctx,
-			body,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		ctx.Status(gorix.StatusCreated)
-
-		return user, nil
+		return ctx.
+			BindBody(&body).
+			Status(gorix.StatusCreated).
+			ResponseEntityXML(func() (any, error) {
+				return c.userService.Create(
+					ctx,
+					body,
+				)
+			})
 	}
 }
 
@@ -128,22 +121,18 @@ func (c *UserController) Update() (
 		ctx *gorix.Context,
 	) (any, error) {
 		var params UserPathDto
-
-		if err := ctx.BindParams(&params); err != nil {
-			return nil, err
-		}
-
 		var body UpdateUserDto
-
-		if err := ctx.BindBody(&body); err != nil {
-			return nil, err
-		}
-
-		return c.userService.Update(
-			ctx,
-			params.ID,
-			body,
-		)
+		return ctx.
+			BindBody(&body).
+			BindParams(&params).
+			Status(gorix.StatusOK).
+			ResponseEntityJSON(func() (any, error) {
+				return c.userService.Update(
+					ctx,
+					params.ID,
+					body,
+				)
+			})
 	}
 }
 
@@ -156,20 +145,14 @@ func (c *UserController) Delete() (
 		ctx *gorix.Context,
 	) (any, error) {
 		var params UserPathDto
-
-		if err := ctx.BindParams(&params); err != nil {
-			return nil, err
-		}
-
-		if err := c.userService.Delete(
-			ctx,
-			params.ID,
-		); err != nil {
-			return nil, err
-		}
-
-		ctx.Status(gorix.StatusNoContent)
-
-		return nil, nil
+		return ctx.
+			BindParams(&params).
+			Status(gorix.StatusNoContent).
+			ResponseEntityJSON(func() (any, error) {
+				return c.userService.Delete(
+					ctx,
+					params.ID,
+				)
+			})
 	}
 }

@@ -14,15 +14,21 @@ func NewAuditInterceptor() *AuditInterceptor {
 }
 
 func (i *AuditInterceptor) Before(ctx *gorix.ExecutionContext) error {
-	fmt.Print("Reached..")
+
+	fmt.Println(fmt.Sprintf("Reached : Controller - %s : Handler - %s ", ctx.Controller, ctx.Handler))
 
 	return nil
 }
 
 func (i *AuditInterceptor) After(ctx *gorix.ExecutionContext) error {
-	ctx.Response = map[string]any{
-		"success": true,
-		"data":    ctx.Response,
+	responseType := ctx.Context.ResponseType()
+	fmt.Println(responseType)
+	if responseType == gorix.ResponseTypeAuto || responseType == gorix.ResponseTypeJSON {
+		ctx.Response = map[string]any{
+			"success": true,
+			"data":    ctx.Response,
+		}
 	}
+
 	return nil
 }

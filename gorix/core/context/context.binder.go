@@ -9,11 +9,13 @@ import (
 	"strings"
 )
 
-func (c *Context) BindBody(target any) error {
+func (c *Context) BindBody(target any) *Context {
 	if target == nil {
-		return NewValidationError([]FieldError{
-			NewFieldError("body", "bind", "body target cannot be nil"),
-		})
+		c.setError(
+			NewValidationError([]FieldError{
+				NewFieldError("body", "bind", "body target cannot be nil"),
+			}))
+
 	}
 
 	defer c.R.Body.Close()
@@ -22,37 +24,44 @@ func (c *Context) BindBody(target any) error {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(target); err != nil {
-		return NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError(
 				"body",
 				"json",
 				fmt.Sprintf("invalid JSON body: %v", err),
 			),
-		})
+		}))
 	}
 
-	return ValidateStruct(target)
+	if err := ValidateStruct(target); err != nil {
+		c.setError(err)
+	}
+	return c
 }
 
-func (c *Context) BindQuery(target any) error {
+func (c *Context) BindQuery(target any) *Context {
 	if target == nil {
-		return NewValidationError([]FieldError{
-			NewFieldError("query", "bind", "query target cannot be nil"),
-		})
+		c.setError(
+			NewValidationError([]FieldError{
+				NewFieldError("query", "bind", "query target cannot be nil"),
+			}))
 	}
 
 	if err := bindValues(target, c.R.URL.Query(), "query"); err != nil {
-		return err
+		c.setError(err)
 	}
 
-	return ValidateStruct(target)
+	if err := ValidateStruct(target); err != nil {
+		c.setError(err)
+	}
+	return c
 }
 
-func (c *Context) BindParams(target any) error {
+func (c *Context) BindParams(target any) *Context {
 	if target == nil {
-		return NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("params", "bind", "path parameter target cannot be nil"),
-		})
+		}))
 	}
 
 	values := make(url.Values)
@@ -62,10 +71,13 @@ func (c *Context) BindParams(target any) error {
 	}
 
 	if err := bindValues(target, values, "param"); err != nil {
-		return err
+		c.setError(err)
 	}
 
-	return ValidateStruct(target)
+	if err := ValidateStruct(target); err != nil {
+		c.setError(err)
+	}
+	return c
 }
 
 func bindValues(target any, values url.Values, tagName string) error {
