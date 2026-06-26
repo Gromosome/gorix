@@ -69,11 +69,9 @@ func WithCancel(
 	if parent == nil {
 		parent = Background()
 	}
-
 	child, cancel := native.WithCancel(
 		parent.ensureNative(),
 	)
-
 	return parent.cloneWithNative(child), CancelFunc(cancel)
 }
 
@@ -87,12 +85,10 @@ func WithTimeout(
 	if parent == nil {
 		parent = Background()
 	}
-
 	child, cancel := native.WithTimeout(
 		parent.ensureNative(),
 		timeout,
 	)
-
 	return parent.cloneWithNative(child), CancelFunc(cancel)
 }
 
@@ -106,12 +102,10 @@ func WithDeadline(
 	if parent == nil {
 		parent = Background()
 	}
-
 	child, cancel := native.WithDeadline(
 		parent.ensureNative(),
 		deadline,
 	)
-
 	return parent.cloneWithNative(child), CancelFunc(cancel)
 }
 
@@ -123,13 +117,11 @@ func WithValue(
 	if parent == nil {
 		parent = Background()
 	}
-
 	child := native.WithValue(
 		parent.ensureNative(),
 		key,
 		value,
 	)
-
 	return parent.cloneWithNative(child)
 }
 
@@ -143,11 +135,9 @@ func (c *Context) cloneWithNative(
 		status: c.status,
 		params: cloneParams(c.params),
 	}
-
 	if copyContext.R != nil {
 		copyContext.R = copyContext.R.WithContext(value)
 	}
-
 	return copyContext
 }
 
@@ -155,10 +145,8 @@ func cloneParams(
 	source map[string]string,
 ) map[string]string {
 	target := make(map[string]string, len(source))
-
 	for key, value := range source {
 		target[key] = value
 	}
-
 	return target
 }

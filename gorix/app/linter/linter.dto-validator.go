@@ -21,7 +21,7 @@ func ValidateDTOFile(path string) error {
 			path,
 			line,
 			col,
-			"dto file must contain at least one DTO struct",
+			"global file must contain at least one DTO struct",
 		)
 	}
 

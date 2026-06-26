@@ -2,9 +2,7 @@ package main
 
 import (
 	"github.com/Gromosome/gorix/gorix"
-	"github.com/Gromosome/gorix/impl-test/filter"
-	"github.com/Gromosome/gorix/impl-test/interceptor"
-	middlewares "github.com/Gromosome/gorix/impl-test/middleware"
+	"github.com/Gromosome/gorix/impl-test/global"
 	"github.com/Gromosome/gorix/impl-test/promotion"
 	"github.com/Gromosome/gorix/impl-test/user"
 	_ "github.com/Gromosome/gorix/sql-drivers/postgres"
@@ -13,13 +11,13 @@ import (
 func main() {
 	app := gorix.NewApp()
 	app.Use(
-		gorix.Apply(middlewares.AuthMiddleware()).Only("/promotion/*"),
+		gorix.Apply(global.AuthMiddleware()).Only("/promotion/*"),
 	)
 	app.UseInterceptors(
-		interceptor.NewAuditInterceptor(),
+		global.NewGlobalInterceptor(),
 	)
 	app.UseFilters(
-		filter.NewExceptionFilter(),
+		global.NewExceptionFilter(),
 	)
 	promotionModule := promotion.NewPromotionModule()
 	userModule := user.NewUserModule()

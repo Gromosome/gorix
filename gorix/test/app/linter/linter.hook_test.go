@@ -19,7 +19,7 @@ func AuthMiddleware() gorix.Middleware { return nil }
 }
 
 func TestValidateInterceptorFileRequiresBeforeAndAfter(t *testing.T) {
-	path := writeLintFile(t, "audit.interceptor.go", `
+	path := writeLintFile(t, "global.interceptor.go", `
 package interceptor
 import "github.com/Gromosome/gorix/gorix"
 type AuditInterceptor struct {}
@@ -31,7 +31,7 @@ func (AuditInterceptor) After(ctx *gorix.ExecutionContext) error { return nil }
 		t.Fatalf("validateInterceptorFile returned error: %v", err)
 	}
 
-	invalidPath := writeLintFile(t, "audit.interceptor.go", `
+	invalidPath := writeLintFile(t, "global.interceptor.go", `
 package interceptor
 type AuditInterceptor struct {}
 `)

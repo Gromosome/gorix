@@ -51,7 +51,7 @@ func ValidatePackageDirectory(dir string) error {
 				return err
 			}
 		}
-		if strings.HasSuffix(name, ".dto.go") {
+		if strings.HasSuffix(name, ".global.go") {
 			if err := ValidateDTOFile(fullPath); err != nil {
 				return err
 			}

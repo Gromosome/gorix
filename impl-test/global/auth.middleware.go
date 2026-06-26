@@ -1,4 +1,4 @@
-package middlewares
+package global
 
 import (
 	"github.com/Gromosome/gorix/gorix"
@@ -10,9 +10,10 @@ func AuthMiddleware() gorix.Middleware {
 			token := c.R.Header.Get("Authorization")
 
 			if token != "Bearer dev-token" {
-				return c.Status(gorix.StatusUnauthorized).JSON(map[string]any{
-					"success": false,
-					"error":   "unauthorized",
+				return c.Status(gorix.StatusUnauthorized).JSONFault(ErrorDTO{
+					Success: false,
+					Error:   "unauthorized",
+					Message: "unauthorized",
 				})
 			}
 			return next(c)

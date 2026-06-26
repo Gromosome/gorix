@@ -9,6 +9,8 @@ import (
 
 	"github.com/Gromosome/gorix/gorix/core/context"
 	"github.com/Gromosome/gorix/gorix/hook"
+	"github.com/Gromosome/gorix/gorix/internal/access"
+	"github.com/Gromosome/gorix/gorix/internal/global"
 )
 
 func (a *App) registerModuleControllers(module any) error {
@@ -220,8 +222,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 					return nil
 				}
 			}
-
-			return c.Status(context.StatusCode(c.GetStatusOrDefault(context.StatusOK))).JSON(execCtx.Response)
+			return c.Status(context.StatusCode(c.GetStatusOrDefault(context.StatusOK))).ResponseBodyInternal(access.Gorix, execCtx.Response)
 		}
 
 		routeMiddlewares := a.ResolveMiddlewares(fullPath)
@@ -394,11 +395,12 @@ func (a *App) handleException(ctx *hook.ExceptionContext) {
 	filters := a.ResolveFilters(ctx.Path)
 
 	if len(filters) == 0 {
-		_ = ctx.Context.Status(ctx.StatusCode).JSON(map[string]any{
-			"success": false,
-			"error":   ctx.Error.Error(),
-			"path":    ctx.Path,
-		})
+		_ = ctx.Context.Status(ctx.StatusCode).ResponseBodyInternal(access.Gorix,
+			global.ErrorDTO{
+				Success: false,
+				Message: ctx.Error.Error(),
+				Error:   ctx.Error.Error() + "on" + ctx.Path,
+			})
 		return
 	}
 
@@ -456,20 +458,31 @@ func NormalizeRoute(basePath string, path string) string {
 }
 
 func (a *App) PrintRoutes() {
+	const (
+		Orange = "\033[38;5;208m"
+		Reset  = "\033[0m"
+	)
+
 	if len(a.routeInfos) == 0 {
-		fmt.Println("No routes registered")
+		fmt.Println(Orange + "No routes registered" + Reset)
 		return
 	}
 
 	fmt.Println()
-	fmt.Println("Registered Gorix Routes")
-	fmt.Println("------------------------------------------------------------")
-	fmt.Printf("%-8s %-30s %-20s %-20s\n", "METHOD", "PATH", "CONTROLLER", "HANDLER")
-	fmt.Println("------------------------------------------------------------")
+	fmt.Println(Orange + "Registered Gorix Routes" + Reset)
+	fmt.Println(Orange + "------------------------------------------------------------" + Reset)
+	fmt.Printf(
+		Orange+"%-8s %-30s %-20s %-20s\n"+Reset,
+		"METHOD",
+		"PATH",
+		"CONTROLLER",
+		"HANDLER",
+	)
+	fmt.Println(Orange + "------------------------------------------------------------" + Reset)
 
 	for _, route := range a.routeInfos {
 		fmt.Printf(
-			"%-8s %-30s %-20s %-20s\n",
+			Orange+"%-8s %-30s %-20s %-20s\n"+Reset,
 			route.Method,
 			route.Path,
 			route.Controller,
@@ -477,6 +490,6 @@ func (a *App) PrintRoutes() {
 		)
 	}
 
-	fmt.Println("------------------------------------------------------------")
+	fmt.Println(Orange + "------------------------------------------------------------" + Reset)
 	fmt.Println()
 }

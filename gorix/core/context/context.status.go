@@ -2,6 +2,10 @@ package context
 
 import "net/http"
 
+type Code interface {
+	Int() int
+	Text() string
+}
 type StatusCode int
 
 const (
@@ -83,5 +87,27 @@ func (s StatusCode) Int() int {
 }
 
 func (s StatusCode) Text() string {
+	return http.StatusText(int(s))
+}
+
+type SOAPStatusCode int
+
+const (
+	SOAPStatusOK                   SOAPStatusCode = 200
+	SOAPStatusAccepted             SOAPStatusCode = 202
+	SOAPStatusBadRequest           SOAPStatusCode = 400
+	SOAPStatusUnauthorized         SOAPStatusCode = 401
+	SOAPStatusForbidden            SOAPStatusCode = 403
+	SOAPStatusNotFound             SOAPStatusCode = 404
+	SOAPStatusMethodNotAllowed     SOAPStatusCode = 405
+	SOAPStatusNotAcceptable        SOAPStatusCode = 406
+	SOAPStatusUnsupportedMediaType SOAPStatusCode = 415
+	SOAPStatusInternalServerError  SOAPStatusCode = 500
+)
+
+func (s SOAPStatusCode) Int() int {
+	return int(s)
+}
+func (s SOAPStatusCode) Text() string {
 	return http.StatusText(int(s))
 }

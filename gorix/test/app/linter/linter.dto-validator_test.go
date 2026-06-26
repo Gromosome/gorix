@@ -9,7 +9,7 @@ import (
 )
 
 func TestValidateDTOFileAcceptsValidDTO(t *testing.T) {
-	path := writeLintFile(t, "user.dto.go", `
+	path := writeLintFile(t, "user.global.go", `
 package user
 type CreateUserDto struct {
 	Name string `+"`json:\"name\"`"+`
@@ -21,7 +21,7 @@ type CreateUserDto struct {
 }
 
 func TestValidateDTOFileRejectsMissingTags(t *testing.T) {
-	path := writeLintFile(t, "user.dto.go", `
+	path := writeLintFile(t, "user.global.go", `
 package user
 type CreateUserDto struct {
 	Name string

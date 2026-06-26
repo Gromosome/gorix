@@ -1,9 +1,7 @@
 package context
 
 import (
-	"fmt"
 	"io"
-	"net/http"
 	"reflect"
 	"strings"
 )
@@ -36,90 +34,148 @@ type Redirect struct {
 }
 
 func (c *Context) ResponseEntityJSON(callback func() (any, error)) (any, error) {
-	if c == nil || c.W == nil {
-		return nil, fmt.Errorf(
-			"gorix context: response writer is unavailable",
-		)
-	}
 	c.setResponseType(ResponseTypeJSON)
-	if c.err != nil {
-		return nil, c.err
+	if c.bindingErr != nil {
+		return nil, c.bindingErr
 	}
 	data, err := callback()
-	if isEmpty(data) {
-		c.setStatus(StatusCode(http.StatusNoContent))
-		return []string{}, nil
+	if err != nil {
+		return nil, err
 	}
-	return data, err
+	if isEmpty(data) {
+		c.setStatus(StatusNoContent)
+		return []any{}, nil
+	}
+	return data, nil
 }
 
 func (c *Context) ResponseEntityXML(callback func() (any, error)) (any, error) {
-	if c == nil || c.W == nil {
-		return nil, fmt.Errorf(
-			"gorix context: response writer is unavailable",
-		)
-	}
 	c.setResponseType(ResponseTypeXML)
-	if c.err != nil {
-		return nil, c.err
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
 	}
 	data, err := callback()
-	return err, c.xml(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+func (c *Context) ResponseEntitySoap11(callback func() (any, error)) (any, error) {
+	c.setResponseType(ResponseTypeSOAP11)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
+	if err != nil {
+		return nil, err
+	}
+	return nil, c.soap(SOAP11, c.GetStatusOrDefault(SOAPStatusOK), data)
+}
+func (c *Context) ResponseEntitySoap12(callback func() (any, error)) (any, error) {
+	c.setResponseType(ResponseTypeSOAP12)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
+	if err != nil {
+		return nil, err
+	}
+	return nil, c.soap(SOAP12, c.GetStatusOrDefault(SOAPStatusOK), data)
 }
 
-func (c *Context) ResponseEntityText(data string, err error) (any, error) {
+func (c *Context) ResponseEntityText(callback func() (string, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.text(data)
 }
 
-func (c *Context) ResponseEntityHTML(data string, err error) (any, error) {
+func (c *Context) ResponseEntityHTML(callback func() (string, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.html(data)
 }
 
-func (c *Context) ResponseEntityTemplate(data Template, err error) (any, error) {
+func (c *Context) ResponseEntityTemplate(callback func() (Template, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.template(data.TemplateFile, data.Data)
 }
 
-func (c *Context) ResponseEntityBlob(data Blob, err error) (any, error) {
+func (c *Context) ResponseEntityBlob(callback func() (Blob, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.blob(data.ContentType, data.Data)
 }
 
-func (c *Context) ResponseEntityFile(data File, err error) (any, error) {
+func (c *Context) ResponseEntityFile(callback func() (File, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.file(data.FilePath)
 }
-func (c *Context) ResponseEntityDownload(data Download, err error) (any, error) {
+func (c *Context) ResponseEntityDownload(callback func() (Download, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.download(data.FilePath, data.FileName)
 }
 
-func (c *Context) ResponseEntityStream(data Stream, err error) (any, error) {
+func (c *Context) ResponseEntityStream(callback func() (Stream, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
 	return nil, c.stream(data.ContentType, data.Reader)
 }
 
-func (c *Context) ResponseEntityRedirect(url string, err error) (any, error) {
+func (c *Context) ResponseEntityRedirect(callback func() (string, error)) (any, error) {
+	c.setResponseType(ResponseTypeJSON)
+	if c != nil && c.bindingErr != nil {
+		return nil, c.bindingErr
+	}
+	data, err := callback()
 	if err != nil {
 		return nil, err
 	}
-	return nil, c.redirect(url)
+	return nil, c.redirect(data)
 }
 
 func isEmpty(value any) bool {

@@ -15,7 +15,7 @@ func TestValidatePackageDirectoryDispatchesValidators(t *testing.T) {
 	}
 
 	files := map[string]string{
-		"user.dto.go": `
+		"user.global.go": `
 package user
 type UserDto struct { Name string ` + "`json:\"name\"`" + ` }
 `,

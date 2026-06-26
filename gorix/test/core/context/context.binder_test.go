@@ -17,10 +17,12 @@ type bindDTO struct {
 
 func TestBindBodyDecodesJSONAndValidates(t *testing.T) {
 	request := httptest.NewRequest("POST", "/", strings.NewReader(`{"name":"bob","age":30,"active":true,"tags":["a","b"]}`))
+	request.Header.Set("Content-Type", "application/json")
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	if err := ctx.BindBody(&target); err != nil {
+	_ = ctx.BindJSONBody(&target)
+	if err := ctx.GetBindingErr(); err != nil {
 		t.Fatalf("BindBody returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 || !target.Active || len(target.Tags) != 2 {
@@ -33,7 +35,8 @@ func TestBindBodyRejectsUnknownFields(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	if err := ctx.BindBody(&target); err == nil {
+	_ = ctx.BindJSONBody(&target)
+	if err := ctx.GetBindingErr(); err == nil {
 		t.Fatal("expected unknown field error")
 	}
 }
@@ -43,7 +46,8 @@ func TestBindQueryBindsScalarAndSliceValues(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	if err := ctx.BindQuery(&target); err != nil {
+	_ = ctx.BindQuery(&target)
+	if err := ctx.GetBindingErr(); err != nil {
 		t.Fatalf("BindQuery returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 || !target.Active {
@@ -59,7 +63,8 @@ func TestBindParamsBindsPathParameters(t *testing.T) {
 	ctx.SetParams(map[string]string{"name": "bob", "age": "30"})
 
 	var target bindDTO
-	if err := ctx.BindParams(&target); err != nil {
+	_ = ctx.BindParams(&target)
+	if err := ctx.GetBindingErr(); err != nil {
 		t.Fatalf("BindParams returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 {
@@ -75,7 +80,10 @@ func TestBindValuesRejectsUnsupportedType(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target invalidDTO
-	if err := ctx.BindQuery(&target); err == nil {
-		t.Fatal("expected unsupported type bind error")
+	_ = ctx.BindQuery(&target)
+	if err := ctx.GetBindingErr(); err != nil {
+		t.Logf("expected unsupported type bind error %v", err)
+	} else {
+		t.Fatal("not throwing expected unsupported type bind error")
 	}
 }

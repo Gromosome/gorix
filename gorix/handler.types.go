@@ -21,15 +21,10 @@ const (
 	DELETE = context.DELETE
 )
 const (
-	ResponseTypeJSON      = context.ResponseTypeJSON
-	ResponseTypeAuto      = context.ResponseTypeAuto
-	ResponseTypeText      = context.ResponseTypeText
-	ResponseTypeHTML      = context.ResponseTypeHTML
-	ResponseTypeFile      = context.ResponseTypeFile
-	ResponseTypeDownload  = context.ResponseTypeDownload
-	ResponseTypeStream    = context.ResponseTypeStream
-	ResponseTypeRedirect  = context.ResponseTypeRedirect
-	ResponseTypeNoContent = context.ResponseTypeNoContent
+	ResponseTypeJSON   = context.ResponseTypeJSON
+	ResponseTypeXML    = context.ResponseTypeXML
+	ResponseTypeSOAP11 = context.ResponseTypeSOAP11
+	ResponseTypeSOAP12 = context.ResponseTypeSOAP12
 )
 
 const (

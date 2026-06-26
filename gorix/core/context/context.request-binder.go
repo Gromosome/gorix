@@ -2,7 +2,9 @@ package context
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -10,56 +12,53 @@ import (
 )
 
 func (c *Context) BindBody(target any) *Context {
-	if target == nil {
-		c.setError(
-			NewValidationError([]FieldError{
-				NewFieldError("body", "bind", "body target cannot be nil"),
-			}))
-
+	if c == nil {
+		return c
 	}
 
-	defer c.R.Body.Close()
+	contentType := c.contentType()
 
-	decoder := json.NewDecoder(c.R.Body)
-	decoder.DisallowUnknownFields()
+	switch {
+	case isJSONContentType(contentType):
+		return c.BindJSONBody(target)
 
-	if err := decoder.Decode(target); err != nil {
-		c.setError(NewValidationError([]FieldError{
+	case isXMLContentType(contentType):
+		return c.BindXMLBody(target)
+
+	default:
+		c.setBindingError(NewValidationError([]FieldError{
 			NewFieldError(
-				"body",
-				"json",
-				fmt.Sprintf("invalid JSON body: %v", err),
+				"headers.Content-Type",
+				"unsupported",
+				"unsupported Content-Type",
 			),
 		}))
+		return c
 	}
-
-	if err := ValidateStruct(target); err != nil {
-		c.setError(err)
-	}
-	return c
 }
 
 func (c *Context) BindQuery(target any) *Context {
 	if target == nil {
-		c.setError(
-			NewValidationError([]FieldError{
-				NewFieldError("query", "bind", "query target cannot be nil"),
-			}))
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError("query", "bind", "query target cannot be nil"),
+		}))
+		return c
 	}
 
 	if err := bindValues(target, c.R.URL.Query(), "query"); err != nil {
-		c.setError(err)
+		c.setBindingError(err)
+		return c
 	}
-
 	if err := ValidateStruct(target); err != nil {
-		c.setError(err)
+		c.setBindingError(err)
+		return c
 	}
 	return c
 }
 
 func (c *Context) BindParams(target any) *Context {
 	if target == nil {
-		c.setError(NewValidationError([]FieldError{
+		c.setBindingError(NewValidationError([]FieldError{
 			NewFieldError("params", "bind", "path parameter target cannot be nil"),
 		}))
 	}
@@ -71,12 +70,44 @@ func (c *Context) BindParams(target any) *Context {
 	}
 
 	if err := bindValues(target, values, "param"); err != nil {
-		c.setError(err)
+		c.setBindingError(err)
+		return c
 	}
 
 	if err := ValidateStruct(target); err != nil {
-		c.setError(err)
+		c.setBindingError(err)
+		return c
 	}
+	return c
+}
+func (c *Context) BindHeaders(target any) *Context {
+	if target == nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError("headers", "bind", "header target cannot be nil"),
+		}))
+		return c
+	}
+	if c.R == nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError("headers", "bind", "request cannot be nil"),
+		}))
+		return c
+	}
+	values := make(url.Values)
+	for key, rawValues := range c.R.Header {
+		values[key] = rawValues
+		// Allows lowercase header tags like `header:"authorization"`
+		values[strings.ToLower(key)] = rawValues
+	}
+	if err := bindValues(target, values, "header"); err != nil {
+		c.setBindingError(err)
+		return c
+	}
+	if err := ValidateStruct(target); err != nil {
+		c.setBindingError(err)
+		return c
+	}
+
 	return c
 }
 
@@ -227,4 +258,106 @@ func setFieldValue(field reflect.Value, raw string) error {
 	default:
 		return fmt.Errorf("unsupported field type %s", field.Kind())
 	}
+}
+func (c *Context) BindJSONBody(target any) *Context {
+	if c == nil {
+		return c
+	}
+	if target == nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError("body", "bind", "body target cannot be nil"),
+		}))
+		return c
+	}
+	contentType := c.contentType()
+	if !isJSONContentType(contentType) {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError(
+				"headers.Content-Type",
+				"content_type",
+				"Content-Type must be application/json",
+			),
+		}))
+		return c
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(c.R.Body)
+	decoder := json.NewDecoder(c.R.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError(
+				"body",
+				"json",
+				fmt.Sprintf("invalid JSON body: %v", err),
+			),
+		}))
+		return c
+	}
+	if err := ValidateStruct(target); err != nil {
+		c.setBindingError(err)
+		return c
+	}
+	return c
+}
+func (c *Context) BindXMLBody(target any) *Context {
+	if c == nil {
+		return c
+	}
+
+	if target == nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError("body", "bind", "body target cannot be nil"),
+		}))
+		return c
+	}
+
+	contentType := c.contentType()
+
+	if !isXMLContentType(contentType) {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError(
+				"headers.Content-Type",
+				"content_type",
+				"Content-Type must be application/xml or text/xml",
+			),
+		}))
+		return c
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(c.R.Body)
+
+	decoder := xml.NewDecoder(c.R.Body)
+
+	if err := decoder.Decode(target); err != nil {
+		c.setBindingError(NewValidationError([]FieldError{
+			NewFieldError(
+				"body",
+				"xml",
+				fmt.Sprintf("invalid XML body: %v", err),
+			),
+		}))
+		return c
+	}
+
+	if err := ValidateStruct(target); err != nil {
+		c.setBindingError(err)
+		return c
+	}
+
+	return c
+}
+func isJSONContentType(contentType string) bool {
+	return contentType == "application/json" ||
+		strings.HasSuffix(contentType, "+json")
+}
+
+func isXMLContentType(contentType string) bool {
+	return contentType == "application/xml" ||
+		contentType == "text/xml" ||
+		strings.HasSuffix(contentType, "+xml")
 }
