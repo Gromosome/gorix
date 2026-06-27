@@ -158,8 +158,22 @@ func (a *App) TryRegisterModules(modules ...any) error {
 
 		if providersModule, ok := module.(providerModule); ok {
 			for _, provider := range providersModule.Providers() {
-				if err := a.container.RegisterProvider(provider); err != nil {
-					return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
+				switch p := provider.(type) {
+				case di.Registration:
+					if p.IsInstance {
+						if err := a.container.RegisterInstance(p.Value, p.Options...); err != nil {
+							return fmt.Errorf("gorix: module %s instance registration failed: %w", moduleName, err)
+						}
+					} else {
+						if err := a.container.RegisterProvider(p.Value, p.Options...); err != nil {
+							return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
+						}
+					}
+
+				default:
+					if err := a.container.RegisterProvider(provider); err != nil {
+						return fmt.Errorf("gorix: module %s provider registration failed: %w", moduleName, err)
+					}
 				}
 			}
 		}
@@ -211,6 +225,30 @@ func (a *App) TryListen(addr string) error {
 		addr,
 		http.HandlerFunc(a.Dispatch),
 	)
+}
+
+func (a *App) RegisterProvider(provider any, opts ...di.ProviderOption) error {
+	return a.container.RegisterProvider(provider, opts...)
+}
+
+func (a *App) Provide(provider any, opts ...di.ProviderOption) error {
+	return a.container.RegisterProvider(provider, opts...)
+}
+
+func (a *App) OverrideProvider(provider any, opts ...di.ProviderOption) error {
+	return a.container.OverrideProvider(provider, opts...)
+}
+
+func (a *App) RegisterInstance(instance any, opts ...di.ProviderOption) error {
+	return a.container.RegisterInstance(instance, opts...)
+}
+
+func (a *App) OverrideInstance(instance any, opts ...di.ProviderOption) error {
+	return a.container.OverrideInstance(instance, opts...)
+}
+
+func (a *App) Resolve(target any) error {
+	return a.container.ResolveInto(target)
 }
 func printGorixLogo() {
 	// ANSI 24-bit TrueColor sequences for a perfectly smooth 6-step gradient

@@ -115,8 +115,10 @@ func (c *Context) json(status int, data any) error {
 }
 
 func (c *Context) xml(status int, data any) error {
+	processedData := data
 	if err := validateBody(data); err != nil {
-		return err
+		c.logger.TypeWarn().CallerLevel(logger.Wrap4).Log("Default XML from framework, Customize response by DTO into interceptor")
+		processedData = global.ResponseXML{Data: data}
 	}
 	if c == nil || c.W == nil {
 		return fmt.Errorf(
@@ -128,7 +130,7 @@ func (c *Context) xml(status int, data any) error {
 	}
 	c.W.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	c.W.WriteHeader(status)
-	if err := xml.NewEncoder(c.W).Encode(data); err != nil {
+	if err := xml.NewEncoder(c.W).Encode(processedData); err != nil {
 		return err
 	}
 	c.committed = true
@@ -137,7 +139,7 @@ func (c *Context) xml(status int, data any) error {
 
 func (c *Context) soapFault(version SOAPVersion, code SOAPFaultCode, message string, detail any) error {
 	if !code.IsValid(SOAPStatusCode(c.GetStatusOrDefault(SOAPStatusBadRequest))) {
-
+		c.logger.TypeError().CallerLevel(logger.Wrap2).Log("both Statuscode( %d ) and Faultcode( %s ) are mismatched ", SOAPStatusCode(c.GetStatusOrDefault(SOAPStatusBadRequest)))
 	}
 	switch version {
 	case SOAP11:
@@ -154,10 +156,6 @@ func (c *Context) soapFault(version SOAPVersion, code SOAPFaultCode, message str
 }
 
 func (c *Context) soap(version SOAPVersion, status int, data any) error {
-	if err := validateBody(data); err != nil {
-		c.logger.CallerLevel(logger.CallerLevelCaller)
-		return err
-	}
 	var contentType SOAPContentType
 	var payload any
 	switch version {

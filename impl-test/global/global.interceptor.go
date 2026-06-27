@@ -20,10 +20,11 @@ func (i *GlobalInterceptor) Before(ctx *gorix.ExecutionContext) error {
 
 func (i *GlobalInterceptor) After(ctx *gorix.ExecutionContext) error {
 	responseType := ctx.Context.ResponseType()
-	fmt.Println(responseType)
-	ctx.Response = ResponseDTO[any]{
-		Success: true,
-		Data:    ctx.Response,
+	if responseType == gorix.ResponseTypeJSON {
+		ctx.Response = ResponseDTO[any]{
+			Success: true,
+			Data:    ctx.Response,
+		}
 	}
 	return nil
 }

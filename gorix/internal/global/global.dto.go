@@ -10,3 +10,8 @@ type ErrorDTO struct {
 	Error   any      `json:"error" xml:"error"`
 	Message string   `json:"message" xml:"message"`
 }
+
+type ResponseXML struct {
+	XMLName xml.Name `json:"-" xml:"response"`
+	Data    any      `json:"data" xml:"data"`
+}

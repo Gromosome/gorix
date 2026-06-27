@@ -1,6 +1,8 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
 	ID int64 `json:"id" xml:"id" db:"id" repository:"primaryKey,autoIncrement"`

@@ -45,7 +45,7 @@ func NewContext(
 		R:          r,
 		params:     make(map[string]string),
 		bindingErr: nil,
-		logger:     logger.NewLogger(logger.CallerLevelParent),
+		logger:     logger.NewLogger(logger.Wrap1),
 	}
 }
 func (c *Context) setStatus(status Code) {

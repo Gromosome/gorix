@@ -2,6 +2,7 @@ package global
 
 import (
 	"github.com/Gromosome/gorix/gorix"
+	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
 func AuthMiddleware() gorix.Middleware {
@@ -10,11 +11,7 @@ func AuthMiddleware() gorix.Middleware {
 			token := c.R.Header.Get("Authorization")
 
 			if token != "Bearer dev-token" {
-				return c.Status(gorix.StatusUnauthorized).JSONFault(ErrorDTO{
-					Success: false,
-					Error:   "unauthorized",
-					Message: "unauthorized",
-				})
+				return c.Status(gorix.StatusUnauthorized).SOAPFault11(context.SOAP11FaultMustUnderstand, "UnAuthorized", "UnAuthorized")
 			}
 			return next(c)
 		}

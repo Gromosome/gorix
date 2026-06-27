@@ -33,10 +33,17 @@ func (level CallerLevel) Int() int {
 }
 
 const (
-	CallerLevelDirect CallerLevel = 0
-	CallerLevelParent CallerLevel = 1
-	CallerLevelCaller CallerLevel = 2
-	CallerLevelOrigin CallerLevel = 3
+	Direct CallerLevel = 0
+	Wrap1  CallerLevel = 1
+	Wrap2  CallerLevel = 2
+	Wrap3  CallerLevel = 3
+	Wrap4  CallerLevel = 4
+	Wrap5  CallerLevel = 5
+	Wrap6  CallerLevel = 6
+	Wrap7  CallerLevel = 7
+	Wrap8  CallerLevel = 8
+	Wrap9  CallerLevel = 9
+	Wrap10 CallerLevel = 10
 )
 
 type Logger struct {

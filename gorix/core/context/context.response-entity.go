@@ -69,7 +69,7 @@ func (c *Context) ResponseEntitySoap11(callback func() (any, error)) (any, error
 	if err != nil {
 		return nil, err
 	}
-	return nil, c.soap(SOAP11, c.GetStatusOrDefault(SOAPStatusOK), data)
+	return data, nil
 }
 func (c *Context) ResponseEntitySoap12(callback func() (any, error)) (any, error) {
 	c.setResponseType(ResponseTypeSOAP12)
@@ -80,7 +80,7 @@ func (c *Context) ResponseEntitySoap12(callback func() (any, error)) (any, error
 	if err != nil {
 		return nil, err
 	}
-	return nil, c.soap(SOAP12, c.GetStatusOrDefault(SOAPStatusOK), data)
+	return data, nil
 }
 
 func (c *Context) ResponseEntityText(callback func() (string, error)) (any, error) {
