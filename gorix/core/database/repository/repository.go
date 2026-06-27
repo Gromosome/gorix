@@ -795,7 +795,7 @@ func (r *Repository[T, ID]) updateWithExecutor(
 	if result.Err() != nil {
 		return fmt.Errorf(
 			"gorix repository: update failed: %w",
-			err,
+			result.Err(),
 		)
 	}
 

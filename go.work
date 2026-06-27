@@ -1,13 +1,16 @@
-go 1.25
+go 1.25.0
 
 use (
+	./document-driver-manager
+	./document-drivers/couchdb
+	./document-drivers/mongo
 	./gorix
 	./impl-test
 	./sql-driver-manager
 	./sql-drivers/mssql
 	./sql-drivers/mysql
-	./sql-drivers/postgres
-	./sql-drivers/sqlite3
-	./sql-drivers/sqlite-modern
 	./sql-drivers/oracle
-	)
+	./sql-drivers/postgres
+	./sql-drivers/sqlite-modern
+	./sql-drivers/sqlite3
+)
