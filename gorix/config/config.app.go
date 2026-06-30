@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Gromosome/gorix/gorix/config/yaml"
 )
@@ -18,6 +19,7 @@ type Config struct {
 type GorixConfig struct {
 	App       AppConfig
 	Databases map[string]DatabaseConfig
+	Documents map[string]DocumentConfig
 }
 
 type AppConfig struct {
@@ -132,6 +134,8 @@ func buildConfig(
 
 	cfg.Gorix.Databases =
 		loadDatabaseConfigs(parsed)
+	cfg.Gorix.Documents =
+		loadDocumentConfigs(parsed)
 
 	return cfg
 }
@@ -217,4 +221,14 @@ func (c Config) Address() string {
 		c.Host(),
 		c.Port(),
 	)
+}
+func parseDuration(value string) (
+	time.Duration,
+	error,
+) {
+	if value == "" {
+		return 0, nil
+	}
+
+	return time.ParseDuration(value)
 }

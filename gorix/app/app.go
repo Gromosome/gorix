@@ -12,6 +12,7 @@ import (
 	"github.com/Gromosome/gorix/gorix/config"
 	"github.com/Gromosome/gorix/gorix/core/context"
 	"github.com/Gromosome/gorix/gorix/core/database"
+	"github.com/Gromosome/gorix/gorix/core/document"
 	"github.com/Gromosome/gorix/gorix/di"
 	"github.com/Gromosome/gorix/gorix/hook"
 )
@@ -49,6 +50,7 @@ type App struct {
 	interceptors []hook.InterceptorConfig
 	filters      []hook.FilterConfig
 	databases    *database.Manager
+	documents    *document.Manager
 }
 
 func NewApp() *App {
@@ -61,10 +63,17 @@ func NewApp() *App {
 
 	container := di.NewContainer()
 	databaseManager := database.NewManager()
-
+	documentManager := document.NewManager()
 	if err := container.RegisterInstance(databaseManager); err != nil {
 		panic(fmt.Errorf(
 			"gorix: failed to register database manager: %w",
+			err,
+		))
+	}
+
+	if err := container.RegisterInstance(documentManager); err != nil {
+		panic(fmt.Errorf(
+			"gorix: failed to register document manager: %w",
 			err,
 		))
 	}
@@ -78,6 +87,7 @@ func NewApp() *App {
 		config:      cfg,
 		container:   container,
 		databases:   databaseManager,
+		documents:   documentManager,
 
 		middlewares:  make([]hook.MiddlewareConfig, 0),
 		interceptors: make([]hook.InterceptorConfig, 0),
@@ -207,11 +217,23 @@ func (a *App) TryListen(addr string) error {
 	if err := a.connectDatabases(startupContext); err != nil {
 		return err
 	}
+	if err := a.connectDocuments(startupContext); err != nil {
+		return err
+	}
 
 	defer func() {
 		if err := a.databases.Close(); err != nil {
 			log.Printf(
 				"gorix: database shutdown error: %v",
+				err,
+			)
+		}
+	}()
+
+	defer func() {
+		if err := a.documents.Close(); err != nil {
+			log.Printf(
+				"gorix: document shutdown error: %v",
 				err,
 			)
 		}

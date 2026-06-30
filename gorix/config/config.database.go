@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Gromosome/gorix/gorix/core/database"
 )
@@ -74,15 +73,4 @@ func (c Config) DatabaseConfigs() ([]database.Config, error) {
 	}
 
 	return configs, nil
-}
-
-func parseDuration(value string) (
-	time.Duration,
-	error,
-) {
-	if value == "" {
-		return 0, nil
-	}
-
-	return time.ParseDuration(value)
 }

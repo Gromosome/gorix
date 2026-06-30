@@ -6,10 +6,10 @@ import (
 	"github.com/Gromosome/gorix/gorix/core/context"
 )
 
-func (a *App) connectDatabases(
+func (a *App) connectDocuments(
 	ctx *context.Context,
 ) error {
-	configs, err := a.config.DatabaseConfigs()
+	configs, err := a.config.DocumentConfigs()
 	if err != nil {
 		return err
 	}
@@ -17,13 +17,14 @@ func (a *App) connectDatabases(
 	if len(configs) == 0 {
 		return nil
 	}
-	for _, databaseConfig := range configs {
-		if err := a.databases.Connect(
+
+	for _, documentConfig := range configs {
+		if err := a.documents.Connect(
 			ctx,
-			databaseConfig,
+			documentConfig,
 		); err != nil {
 			return fmt.Errorf(
-				"gorix: database bootstrap failed: %w",
+				"gorix: document bootstrap failed: %w",
 				err,
 			)
 		}

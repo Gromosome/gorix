@@ -58,6 +58,13 @@ func (Adapter) Normalize(err error) *docdriver.Error {
 		return nil
 	}
 
+	if dbErr, ok := docdriver.AsError(err); ok {
+		if dbErr == nil {
+			return nil
+		}
+		return dbErr
+	}
+
 	if errors.Is(err, context.Canceled) ||
 		errors.Is(err, context.DeadlineExceeded) ||
 		mongodriver.IsTimeout(err) {

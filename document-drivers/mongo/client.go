@@ -16,14 +16,15 @@ type Client struct {
 
 func (c *Client) Ping(ctx context.Context) error {
 	if c == nil || c.native == nil {
-		return fmt.Errorf(
-			"gorix mongo: client is unavailable",
-		)
+		return fmt.Errorf("gorix mongo: client is unavailable")
 	}
 
-	return c.adapter.Normalize(
-		c.native.Ping(ctx, readpref.Primary()),
-	)
+	err := c.native.Ping(ctx, readpref.Primary())
+	if err != nil {
+		return c.adapter.Normalize(err)
+	}
+
+	return nil
 }
 
 func (c *Client) Close(ctx context.Context) error {
@@ -31,9 +32,12 @@ func (c *Client) Close(ctx context.Context) error {
 		return nil
 	}
 
-	return c.adapter.Normalize(
-		c.native.Disconnect(ctx),
-	)
+	err := c.native.Disconnect(ctx)
+	if err != nil {
+		return c.adapter.Normalize(err)
+	}
+
+	return nil
 }
 
 func (c *Client) Database(name string) docdriver.Database {
