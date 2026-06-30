@@ -11,8 +11,19 @@ gorix:
       max-idle-connections: 10
       connection-max-lifetime: 30m
       connection-max-idle-time: 5m
+#  documents:
+#    default:
+#      driver: mongo
+#      dsn: "mongodb://localhost:27017/gorix?replicaSet=rs0&directConnection=true"
+#      database: gorix
+#      ping-timeout: 5s
   documents:
     default:
+      driver: couchdb
+      dsn: "http://admin:password123@localhost:5984"
+      database: gorix
+      ping-timeout: 5s
+    mongo:
       driver: mongo
       dsn: "mongodb://localhost:27017/gorix?replicaSet=rs0&directConnection=true"
       database: gorix

@@ -1,7 +1,9 @@
 package main
 
 import (
+	_ "github.com/Gromosome/gorix/document-drivers/couchdb"
 	_ "github.com/Gromosome/gorix/document-drivers/mongo"
+	"github.com/Gromosome/gorix/impl-test/post"
 
 	"github.com/Gromosome/gorix/gorix"
 	"github.com/Gromosome/gorix/impl-test/global"
@@ -23,6 +25,7 @@ func main() {
 	)
 	promotionModule := promotion.NewPromotionModule()
 	userModule := user.NewUserModule()
-	app.RegisterModules(promotionModule, userModule)
+	postModule := post.NewPostModule()
+	app.RegisterModules(promotionModule, userModule, postModule)
 	app.Listen()
 }
