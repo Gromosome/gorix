@@ -1,8 +1,8 @@
 package config
 
 import (
+	"fmt"
 	"strings"
-	"time"
 
 	docdriver "github.com/Gromosome/gorix/document-driver-manager"
 	"github.com/Gromosome/gorix/gorix/config/yaml"
@@ -26,6 +26,13 @@ func (c Config) DocumentConfigs() ([]DocumentConfig, error) {
 	)
 
 	for name, source := range c.Gorix.Documents {
+		if _, err := parseDuration(source.PingTimeout); err != nil {
+			return nil, fmt.Errorf(
+				"gorix config: invalid document %q ping-timeout: %w",
+				name,
+				err,
+			)
+		}
 
 		configs = append(
 			configs,
@@ -35,7 +42,7 @@ func (c Config) DocumentConfigs() ([]DocumentConfig, error) {
 				DSN:         source.DSN,
 				Database:    source.Database,
 				PingTimeout: source.PingTimeout,
-			},
+			}.Normalize(),
 		)
 	}
 
@@ -104,21 +111,21 @@ func (c DocumentConfig) Normalize() DocumentConfig {
 	if c.Database == "" {
 		c.Database = c.Name
 	}
-	pingTimeOut, _ := parseDuration(c.PingTimeout)
-	if pingTimeOut <= 0 {
-		pingTimeOut = 5 * time.Second
+	if c.PingTimeout == "" {
+		c.PingTimeout = "5s"
 	}
-
 	return c
 }
 
 func (c DocumentConfig) DriverConfig() docdriver.Config {
 	c = c.Normalize()
-	pingTimeOut, _ := parseDuration(c.PingTimeout)
+
+	pingTimeout, _ := parseDuration(c.PingTimeout)
+
 	return docdriver.Config{
 		Driver:      c.Driver,
 		DSN:         c.DSN,
 		Database:    c.Database,
-		PingTimeout: pingTimeOut,
+		PingTimeout: pingTimeout,
 	}
 }

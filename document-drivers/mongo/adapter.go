@@ -59,9 +59,6 @@ func (Adapter) Normalize(err error) *docdriver.Error {
 	}
 
 	if dbErr, ok := docdriver.AsError(err); ok {
-		if dbErr == nil {
-			return nil
-		}
 		return dbErr
 	}
 

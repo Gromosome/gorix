@@ -16,7 +16,9 @@ type Client struct {
 
 func (c *Client) Ping(ctx context.Context) error {
 	if c == nil || c.native == nil {
-		return fmt.Errorf("gorix mongo: client is unavailable")
+		return fmt.Errorf(
+			"gorix mongo: client is unavailable",
+		)
 	}
 
 	err := c.native.Ping(ctx, readpref.Primary())

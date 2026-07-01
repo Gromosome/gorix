@@ -44,7 +44,7 @@ func (c *Context) ResponseEntityJSON(callback func() (any, error)) (any, error) 
 	}
 	if isEmpty(data) {
 		c.setStatus(StatusNoContent)
-		return []any{}, nil
+		return nil, nil
 	}
 	return data, nil
 }

@@ -177,6 +177,21 @@ func bindValues(target any, values url.Values, tagName string) error {
 }
 
 func setFieldValues(field reflect.Value, rawValues []string) error {
+	if field.Kind() == reflect.Pointer {
+		if len(rawValues) == 0 || strings.TrimSpace(rawValues[0]) == "" {
+			return nil
+		}
+
+		elem := reflect.New(field.Type().Elem())
+
+		if err := setFieldValues(elem.Elem(), rawValues); err != nil {
+			return err
+		}
+
+		field.Set(elem)
+		return nil
+	}
+
 	if field.Kind() == reflect.Slice {
 		return setSliceValues(field, rawValues)
 	}

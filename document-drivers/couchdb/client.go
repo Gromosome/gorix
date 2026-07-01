@@ -35,7 +35,12 @@ func (c *Client) Close(ctx context.Context) error {
 		return nil
 	}
 
-	return c.adapter.Normalize(c.native.Close())
+	err := c.native.Close()
+	if err != nil {
+		return c.adapter.Normalize(err)
+	}
+
+	return nil
 }
 
 func (c *Client) Database(name string) docdriver.Database {

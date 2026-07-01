@@ -91,7 +91,6 @@ func (r *Repository[T, ID]) Find(
 	); err != nil {
 		return nil, err
 	}
-
 	return out, nil
 }
 

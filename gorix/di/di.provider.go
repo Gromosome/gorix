@@ -69,9 +69,6 @@ func typeFromHint(typeHint any) (reflect.Type, error) {
 	}
 
 	t := reflect.TypeOf(typeHint)
-
-	// Common Go interface-binding pattern:
-	// As((*UserRepository)(nil))
 	if t.Kind() == reflect.Pointer && t.Elem().Kind() == reflect.Interface {
 		return t.Elem(), nil
 	}

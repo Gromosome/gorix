@@ -152,6 +152,9 @@ func DefaultConfig() Config {
 			Databases: make(
 				map[string]DatabaseConfig,
 			),
+			Documents: make(
+				map[string]DocumentConfig,
+			),
 		},
 	}
 }

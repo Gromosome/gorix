@@ -7,7 +7,7 @@ import (
 )
 
 type DocumentManager = document.Manager
-type DocumentConfig = config.Config
+type DocumentConfig = config.DocumentConfig
 
 type DocumentRepository[T any, ID comparable] = document.Repository[T, ID]
 type DocumentScopedRepository[T any, ID comparable] = document.ScopedRepository[T, ID]

@@ -32,6 +32,7 @@ func (a Adapter) Open(
 	if strings.TrimSpace(config.DSN) == "" {
 		return nil, fmt.Errorf("gorix couchdb: DSN is required")
 	}
+
 	native, err := kivik.New("couch", config.DSN)
 	if err != nil {
 		return nil, a.Normalize(err)

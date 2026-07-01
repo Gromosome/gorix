@@ -61,10 +61,10 @@ func (c *Collection) FindByID(
 		return err
 	}
 
-	err = c.native.
-		FindOne(ctx, filter).
-		Decode(out)
-
+	err = decodeOneDocument(
+		c.native.FindOne(ctx, filter),
+		out,
+	)
 	if err != nil {
 		return c.adapter.Normalize(err)
 	}
@@ -99,7 +99,7 @@ func (c *Collection) Find(
 	}
 	defer cursor.Close(ctx)
 
-	if err := cursor.All(ctx, out); err != nil {
+	if err := decodeManyDocuments(ctx, cursor, out); err != nil {
 		return c.adapter.Normalize(err)
 	}
 
@@ -259,7 +259,14 @@ func idFilter(id any) (bson.M, error) {
 
 		objectID, err := bson.ObjectIDFromHex(text)
 		if err == nil {
-			return bson.M{"_id": objectID}, nil
+			return bson.M{
+				"_id": bson.M{
+					"$in": []any{
+						objectID,
+						text,
+					},
+				},
+			}, nil
 		}
 
 		return bson.M{"_id": text}, nil

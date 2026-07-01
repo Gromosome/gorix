@@ -96,6 +96,12 @@ func (m *Manager) Connect(
 			config.Name,
 		)
 	}
+	if config.Database == "" {
+		return fmt.Errorf(
+			"gorix document: database is required for connection %q",
+			config.Name,
+		)
+	}
 
 	adapter, err := docdriver.Lookup(config.Driver)
 	if err != nil {
@@ -123,7 +129,7 @@ func (m *Manager) Connect(
 
 	if err := client.Ping(openCtx); err != nil {
 		_ = client.Close(context.Background())
-		return adapter.Normalize(err)
+		return err
 	}
 
 	connection := &Connection{

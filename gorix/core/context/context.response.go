@@ -107,6 +107,10 @@ func (c *Context) json(status int, data any) error {
 	}
 	c.W.Header().Set("Content-Type", "application/json")
 	c.W.WriteHeader(status)
+	if status == StatusNoContent.Int() {
+		c.committed = true
+		return nil
+	}
 	if err := json.NewEncoder(c.W).Encode(data); err != nil {
 		return err
 	}
