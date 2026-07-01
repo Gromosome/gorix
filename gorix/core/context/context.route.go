@@ -3,7 +3,7 @@ package context
 type Method string
 type Path string
 type BasePath string
-type RouteHandler func(c *Context) (any, error)
+type RouteHandler any
 
 const (
 	GET    Method = "GET"

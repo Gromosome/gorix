@@ -101,11 +101,14 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 			)
 		}
 
-		routeAction, ok := startupOut[2].Interface().(context.RouteHandler)
-		if !ok {
+		routeAction := startupOut[2].Interface()
+
+		routeInvoker, err := newRouteActionInvoker(routeAction)
+		if err != nil {
 			return fmt.Errorf(
-				"gorix: controller method %s third return value must be gorix.RouteHandler",
+				"gorix: controller method %s invalid route handler: %w",
 				methodInfo.Name,
+				err,
 			)
 		}
 
@@ -186,7 +189,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 				}
 			}
 
-			response, err := routeAction(c)
+			response, err := routeInvoker.Invoke(c)
 			if err != nil {
 				execCtx.Error = err
 
@@ -492,4 +495,148 @@ func (a *App) PrintRoutes() {
 
 	fmt.Println(Orange + "------------------------------------------------------------" + Reset)
 	fmt.Println()
+}
+
+type routeActionInvoker struct {
+	fn   reflect.Value
+	args []routeActionArg
+}
+
+type routeActionArg struct {
+	typ       reflect.Type
+	source    context.BindSource
+	isContext bool
+}
+
+var (
+	contextPtrType = reflect.TypeOf((*context.Context)(nil))
+	bindingArgType = reflect.TypeOf((*context.BindingArg)(nil)).Elem()
+	errorType      = reflect.TypeOf((*error)(nil)).Elem()
+)
+
+func newRouteActionInvoker(handler any) (*routeActionInvoker, error) {
+	fn := reflect.ValueOf(handler)
+
+	if !fn.IsValid() || fn.Kind() != reflect.Func {
+		return nil, fmt.Errorf("route handler must be a function")
+	}
+
+	fnType := fn.Type()
+
+	if fnType.NumOut() != 2 {
+		return nil, fmt.Errorf("route handler must return 2 values: any, error")
+	}
+
+	if !fnType.Out(1).Implements(errorType) {
+		return nil, fmt.Errorf("route handler second return value must be error")
+	}
+
+	invoker := &routeActionInvoker{
+		fn:   fn,
+		args: make([]routeActionArg, fnType.NumIn()),
+	}
+
+	bodyCount := 0
+
+	for i := 0; i < fnType.NumIn(); i++ {
+		argType := fnType.In(i)
+
+		if argType == contextPtrType {
+			invoker.args[i] = routeActionArg{
+				typ:       argType,
+				isContext: true,
+			}
+			continue
+		}
+
+		if argType.Implements(bindingArgType) {
+			arg := reflect.New(argType).Elem()
+			bindingArg := arg.Interface().(context.BindingArg)
+
+			source := bindingArg.BindSource()
+
+			if source == context.BindSourceBody {
+				bodyCount++
+				if bodyCount > 1 {
+					return nil, fmt.Errorf("route handler cannot have more than one body argument")
+				}
+			}
+
+			invoker.args[i] = routeActionArg{
+				typ:    argType,
+				source: source,
+			}
+			continue
+		}
+
+		return nil, fmt.Errorf(
+			"unsupported route handler argument at index %d: %s",
+			i,
+			argType.String(),
+		)
+	}
+
+	return invoker, nil
+}
+
+func (i *routeActionInvoker) Invoke(c *context.Context) (any, error) {
+	args := make([]reflect.Value, len(i.args))
+
+	for index, arg := range i.args {
+		if arg.isContext {
+			args[index] = reflect.ValueOf(c)
+			continue
+		}
+
+		value, err := bindRouteActionArg(c, arg.typ, arg.source)
+		if err != nil {
+			return nil, err
+		}
+
+		args[index] = value
+	}
+
+	out := i.fn.Call(args)
+
+	if !out[1].IsNil() {
+		return nil, out[1].Interface().(error)
+	}
+
+	return out[0].Interface(), nil
+}
+
+func bindRouteActionArg(
+	c *context.Context,
+	argType reflect.Type,
+	source context.BindSource,
+) (reflect.Value, error) {
+	arg := reflect.New(argType).Elem()
+
+	valueField := arg.FieldByName("Value")
+	if !valueField.IsValid() {
+		return reflect.Value{}, fmt.Errorf("%s must have Value field", argType.String())
+	}
+
+	if !valueField.CanAddr() {
+		return reflect.Value{}, fmt.Errorf("%s.Value cannot be addressed", argType.String())
+	}
+
+	target := valueField.Addr().Interface()
+
+	switch source {
+	case context.BindSourceParams:
+		return arg, c.BindParams(target)
+
+	case context.BindSourceQuery:
+		return arg, c.BindQuery(target)
+
+	case context.BindSourceBody:
+		return arg, c.BindBody(target)
+
+	case context.BindSourceHeaders:
+		return arg, c.BindHeaders(target)
+
+	default:
+		return reflect.Value{}, fmt.Errorf("unsupported bind source: %s", source)
+	}
 }

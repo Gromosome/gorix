@@ -11,9 +11,9 @@ import (
 	"strings"
 )
 
-func (c *Context) BindBody(target any) *Context {
+func (c *Context) BindBody(target any) error {
 	if c == nil {
-		return c
+		return fmt.Errorf("cannot bind a nil context")
 	}
 
 	contentType := c.contentType()
@@ -26,41 +26,37 @@ func (c *Context) BindBody(target any) *Context {
 		return c.BindXMLBody(target)
 
 	default:
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError(
 				"headers.Content-Type",
 				"unsupported",
 				"unsupported Content-Type",
 			),
-		}))
-		return c
+		})
 	}
 }
 
-func (c *Context) BindQuery(target any) *Context {
+func (c *Context) BindQuery(target any) error {
 	if target == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("query", "bind", "query target cannot be nil"),
-		}))
-		return c
+		})
 	}
 
 	if err := bindValues(target, c.R.URL.Query(), "query"); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
 	if err := ValidateStruct(target); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
-	return c
+	return nil
 }
 
-func (c *Context) BindParams(target any) *Context {
+func (c *Context) BindParams(target any) error {
 	if target == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("params", "bind", "path parameter target cannot be nil"),
-		}))
+		})
 	}
 
 	values := make(url.Values)
@@ -70,28 +66,26 @@ func (c *Context) BindParams(target any) *Context {
 	}
 
 	if err := bindValues(target, values, "param"); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
 
 	if err := ValidateStruct(target); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
-	return c
+	return nil
 }
-func (c *Context) BindHeaders(target any) *Context {
+
+func (c *Context) BindHeaders(target any) error {
 	if target == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("headers", "bind", "header target cannot be nil"),
-		}))
-		return c
+		})
 	}
+
 	if c.R == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("headers", "bind", "request cannot be nil"),
-		}))
-		return c
+		})
 	}
 	values := make(url.Values)
 	for key, rawValues := range c.R.Header {
@@ -100,15 +94,12 @@ func (c *Context) BindHeaders(target any) *Context {
 		values[strings.ToLower(key)] = rawValues
 	}
 	if err := bindValues(target, values, "header"); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
 	if err := ValidateStruct(target); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
-
-	return c
+	return nil
 }
 
 func bindValues(target any, values url.Values, tagName string) error {
@@ -274,26 +265,24 @@ func setFieldValue(field reflect.Value, raw string) error {
 		return fmt.Errorf("unsupported field type %s", field.Kind())
 	}
 }
-func (c *Context) BindJSONBody(target any) *Context {
+func (c *Context) BindJSONBody(target any) error {
 	if c == nil {
-		return c
+		return fmt.Errorf("cannot bind a nil context")
 	}
 	if target == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("body", "bind", "body target cannot be nil"),
-		}))
-		return c
+		})
 	}
 	contentType := c.contentType()
 	if !isJSONContentType(contentType) {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError(
 				"headers.Content-Type",
 				"content_type",
 				"Content-Type must be application/json",
 			),
-		}))
-		return c
+		})
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -302,44 +291,41 @@ func (c *Context) BindJSONBody(target any) *Context {
 	decoder := json.NewDecoder(c.R.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError(
 				"body",
 				"json",
 				fmt.Sprintf("invalid JSON body: %v", err),
 			),
-		}))
-		return c
+		})
 	}
 	if err := ValidateStruct(target); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
-	return c
+	return nil
 }
-func (c *Context) BindXMLBody(target any) *Context {
+func (c *Context) BindXMLBody(target any) error {
 	if c == nil {
-		return c
+		return fmt.Errorf("cannot bind a nil context")
 	}
 
 	if target == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError("body", "bind", "body target cannot be nil"),
-		}))
-		return c
+		})
+
 	}
 
 	contentType := c.contentType()
 
 	if !isXMLContentType(contentType) {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError(
 				"headers.Content-Type",
 				"content_type",
 				"Content-Type must be application/xml or text/xml",
 			),
-		}))
-		return c
+		})
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -349,22 +335,20 @@ func (c *Context) BindXMLBody(target any) *Context {
 	decoder := xml.NewDecoder(c.R.Body)
 
 	if err := decoder.Decode(target); err != nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		return NewValidationError([]FieldError{
 			NewFieldError(
 				"body",
 				"xml",
 				fmt.Sprintf("invalid XML body: %v", err),
 			),
-		}))
-		return c
+		})
 	}
 
 	if err := ValidateStruct(target); err != nil {
-		c.setBindingError(err)
-		return c
+		return err
 	}
 
-	return c
+	return nil
 }
 func isJSONContentType(contentType string) bool {
 	return contentType == "application/json" ||

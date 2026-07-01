@@ -37,16 +37,14 @@ func (c *PostController) FindByID() (
 ) {
 	return gorix.GET, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[PostPathDto],
 	) (any, error) {
-		var params PostPathDto
-
 		return ctx.
-			BindParams(&params).
 			Status(gorix.StatusOK).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.FindByID(
 					ctx,
-					params.ID,
+					params.Value.ID,
 				)
 			})
 	}
@@ -59,16 +57,14 @@ func (c *PostController) Find() (
 ) {
 	return gorix.GET, "/", func(
 		ctx *gorix.Context,
+		query gorix.Query[PostQueryDto],
 	) (any, error) {
-		var query PostQueryDto
-
 		return ctx.
-			BindQuery(&query).
 			Status(gorix.StatusOK).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.Find(
 					ctx,
-					query,
+					query.Value,
 				)
 			})
 	}
@@ -81,16 +77,14 @@ func (c *PostController) Count() (
 ) {
 	return gorix.GET, "/count", func(
 		ctx *gorix.Context,
+		query gorix.Query[PostQueryDto],
 	) (any, error) {
-		var query PostQueryDto
-
 		return ctx.
-			BindQuery(&query).
 			Status(gorix.StatusOK).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.Count(
 					ctx,
-					query,
+					query.Value,
 				)
 			})
 	}
@@ -103,16 +97,14 @@ func (c *PostController) Create() (
 ) {
 	return gorix.POST, "/", func(
 		ctx *gorix.Context,
+		body gorix.Body[CreatePostDto],
 	) (any, error) {
-		var body CreatePostDto
-
 		return ctx.
-			BindBody(&body).
 			Status(gorix.StatusCreated).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.Create(
 					ctx,
-					body,
+					body.Value,
 				)
 			})
 	}
@@ -125,16 +117,14 @@ func (c *PostController) CreateTx() (
 ) {
 	return gorix.POST, "/tx", func(
 		ctx *gorix.Context,
+		body gorix.Body[CreatePostDto],
 	) (any, error) {
-		var body CreatePostDto
-
 		return ctx.
-			BindBody(&body).
 			Status(gorix.StatusCreated).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.CreateTx(
 					ctx,
-					body,
+					body.Value,
 				)
 			})
 	}
@@ -147,19 +137,16 @@ func (c *PostController) Update() (
 ) {
 	return gorix.PUT, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[PostPathDto],
+		body gorix.Body[UpdatePostDto],
 	) (any, error) {
-		var params PostPathDto
-		var body UpdatePostDto
-
 		return ctx.
-			BindParams(&params).
-			BindBody(&body).
 			Status(gorix.StatusOK).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.Update(
 					ctx,
-					params.ID,
-					body,
+					params.Value.ID,
+					body.Value,
 				)
 			})
 	}
@@ -172,16 +159,14 @@ func (c *PostController) Delete() (
 ) {
 	return gorix.DELETE, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[PostPathDto],
 	) (any, error) {
-		var params PostPathDto
-
 		return ctx.
-			BindParams(&params).
 			Status(gorix.StatusNoContent).
 			ResponseEntityJSON(func() (any, error) {
 				return c.postService.DeleteByID(
 					ctx,
-					params.ID,
+					params.Value.ID,
 				)
 			})
 	}

@@ -30,15 +30,14 @@ func (c *UserController) FindByID() (
 ) {
 	return gorix.GET, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[UserPathDto],
 	) (any, error) {
-		var params UserPathDto
 		return ctx.
 			Status(gorix.StatusOK).
-			BindParams(&params).
 			ResponseEntityJSON(func() (any, error) {
 				return c.userService.GetByID(
 					ctx,
-					params.ID,
+					params.Value.ID,
 				)
 			})
 	}
@@ -52,7 +51,6 @@ func (c *UserController) FindAll() (
 	return gorix.GET, "/", func(
 		ctx *gorix.Context,
 	) (any, error) {
-
 		return ctx.Status(gorix.StatusOK).ResponseEntityXML(func() (any, error) {
 			return c.userService.GetAll(ctx)
 		})
@@ -66,17 +64,14 @@ func (c *UserController) FindActive() (
 ) {
 	return gorix.GET, "/active", func(
 		ctx *gorix.Context,
+		query gorix.Params[UserQueryDto],
 	) (any, error) {
-		query := UserQueryDto{
-			Limit: 20,
-		}
 		return ctx.
 			Status(gorix.StatusOK).
-			BindQuery(&query).
 			ResponseEntityJSON(func() (any, error) {
 				return c.userService.GetActive(
 					ctx,
-					query,
+					query.Value,
 				)
 			})
 	}
@@ -101,15 +96,14 @@ func (c *UserController) Create() (
 ) {
 	return gorix.POST, "/", func(
 		ctx *gorix.Context,
+		body gorix.Body[CreateUserDto],
 	) (any, error) {
-		var body CreateUserDto
 		return ctx.
-			BindBody(&body).
 			Status(gorix.StatusCreated).
 			ResponseEntityJSON(func() (any, error) {
 				return c.userService.Create(
 					ctx,
-					body,
+					body.Value,
 				)
 			})
 	}
@@ -122,18 +116,16 @@ func (c *UserController) Update() (
 ) {
 	return gorix.PUT, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[UserPathDto],
+		body gorix.Body[UpdateUserDto],
 	) (any, error) {
-		var params UserPathDto
-		var body UpdateUserDto
 		return ctx.
 			Status(gorix.StatusOK).
-			BindBody(&body).
-			BindParams(&params).
 			ResponseEntityJSON(func() (any, error) {
 				return c.userService.Update(
 					ctx,
-					params.ID,
-					body,
+					params.Value.ID,
+					body.Value,
 				)
 			})
 	}
@@ -146,15 +138,14 @@ func (c *UserController) Delete() (
 ) {
 	return gorix.DELETE, "/:id", func(
 		ctx *gorix.Context,
+		params gorix.Params[UserPathDto],
 	) (any, error) {
-		var params UserPathDto
 		return ctx.
 			Status(gorix.StatusNoContent).
-			BindParams(&params).
 			ResponseEntityJSON(func() (any, error) {
 				return c.userService.Delete(
 					ctx,
-					params.ID,
+					params.Value.ID,
 				)
 			})
 	}

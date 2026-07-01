@@ -13,6 +13,11 @@ type Path = context.Path
 type BasePath = context.BasePath
 type RouteInfo = context.RouteInfo
 
+type Params[T any] = context.Params[T]
+type Query[T any] = context.Query[T]
+type Body[T any] = context.Body[T]
+type Headers[T any] = context.Headers[T]
+
 const (
 	GET    = context.GET
 	POST   = context.POST
