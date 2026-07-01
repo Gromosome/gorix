@@ -35,8 +35,8 @@ func TestBindBodyRejectsUnknownFields(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	_ = ctx.BindJSONBody(&target)
-	if err := ctx.GetBindingErr(); err == nil {
+	err := ctx.BindJSONBody(&target)
+	if err == nil {
 		t.Fatal("expected unknown field error")
 	}
 }
@@ -46,8 +46,8 @@ func TestBindQueryBindsScalarAndSliceValues(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	_ = ctx.BindQuery(&target)
-	if err := ctx.GetBindingErr(); err != nil {
+	err := ctx.BindQuery(&target)
+	if err != nil {
 		t.Fatalf("BindQuery returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 || !target.Active {
@@ -63,8 +63,8 @@ func TestBindParamsBindsPathParameters(t *testing.T) {
 	ctx.SetParams(map[string]string{"name": "bob", "age": "30"})
 
 	var target bindDTO
-	_ = ctx.BindParams(&target)
-	if err := ctx.GetBindingErr(); err != nil {
+	err := ctx.BindParams(&target)
+	if err != nil {
 		t.Fatalf("BindParams returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 {
@@ -80,8 +80,8 @@ func TestBindValuesRejectsUnsupportedType(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target invalidDTO
-	_ = ctx.BindQuery(&target)
-	if err := ctx.GetBindingErr(); err != nil {
+	err := ctx.BindQuery(&target)
+	if err != nil {
 		t.Logf("expected unsupported type bind error %v", err)
 	} else {
 		t.Fatal("not throwing expected unsupported type bind error")
