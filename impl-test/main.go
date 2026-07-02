@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	app := gorix.NewApp()
+	app := gorix.NewApp().APIPrefix("/api")
 	app.Use(
 		gorix.Apply(global.AuthMiddleware()).Only("/promotion/*"),
 	)

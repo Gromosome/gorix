@@ -324,7 +324,7 @@ func (a *App) registerController(moduleName string, basePath string, controllerV
 	return nil
 }
 func (a *App) Dispatch(w http.ResponseWriter, r *http.Request) {
-	requestPath := r.URL.Path
+	requestPath := strings.TrimSpace(r.URL.Path) // To avoid request failure due to whitespace
 	var methodNotAllowedRoute *routeEntry
 	var methodNotAllowedContext *context.Context
 	methodNotAllowedScore := -1
