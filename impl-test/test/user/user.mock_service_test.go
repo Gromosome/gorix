@@ -2,7 +2,8 @@ package user
 
 import (
 	"github.com/Gromosome/gorix/gorix"
-	"github.com/Gromosome/gorix/impl-test/user"
+	"github.com/Gromosome/gorix/impl-test/user/dto"
+	"github.com/Gromosome/gorix/impl-test/user/repository"
 )
 
 type MockUserService struct {
@@ -10,7 +11,7 @@ type MockUserService struct {
 	GetByIDValue  int64
 
 	CreateCalled bool
-	CreateBody   user.CreateUserDto
+	CreateBody   dto.CreateUserDto
 }
 
 func NewMockUserService() *MockUserService {
@@ -20,11 +21,11 @@ func NewMockUserService() *MockUserService {
 func (m *MockUserService) GetByID(
 	ctx *gorix.Context,
 	id int64,
-) (*user.User, error) {
+) (*repository.User, error) {
 	m.GetByIDCalled = true
 	m.GetByIDValue = id
 
-	return &user.User{
+	return &repository.User{
 		ID:     id,
 		Name:   "Mock Controller User",
 		Email:  "controller@gorix.dev",
@@ -34,8 +35,8 @@ func (m *MockUserService) GetByID(
 
 func (m *MockUserService) GetAll(
 	ctx *gorix.Context,
-) ([]user.User, error) {
-	return []user.User{
+) ([]repository.User, error) {
+	return []repository.User{
 		{
 			ID:     1,
 			Name:   "Mock User",
@@ -47,15 +48,15 @@ func (m *MockUserService) GetAll(
 
 func (m *MockUserService) GetActive(
 	ctx *gorix.Context,
-	query user.UserQueryDto,
-) ([]user.User, error) {
+	query dto.UserQueryDto,
+) ([]repository.User, error) {
 	return m.GetAll(ctx)
 }
 
 func (m *MockUserService) GetSummary(
 	ctx *gorix.Context,
-) (*user.UserSummary, error) {
-	return &user.UserSummary{
+) (*repository.UserSummary, error) {
+	return &repository.UserSummary{
 		TotalUsers:  1,
 		ActiveUsers: 1,
 	}, nil
@@ -63,12 +64,12 @@ func (m *MockUserService) GetSummary(
 
 func (m *MockUserService) Create(
 	ctx *gorix.Context,
-	request user.CreateUserDto,
-) (*user.User, error) {
+	request dto.CreateUserDto,
+) (*repository.User, error) {
 	m.CreateCalled = true
 	m.CreateBody = request
 
-	return &user.User{
+	return &repository.User{
 		ID:     100,
 		Name:   request.Name,
 		Email:  request.Email,
@@ -79,9 +80,9 @@ func (m *MockUserService) Create(
 func (m *MockUserService) Update(
 	ctx *gorix.Context,
 	id int64,
-	request user.UpdateUserDto,
-) (*user.User, error) {
-	return &user.User{
+	request dto.UpdateUserDto,
+) (*repository.User, error) {
+	return &repository.User{
 		ID:     id,
 		Name:   request.Name,
 		Active: request.Active,

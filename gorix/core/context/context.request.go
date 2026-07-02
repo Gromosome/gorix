@@ -1,7 +1,6 @@
 package context
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 )
@@ -62,76 +61,4 @@ func (c *Context) QueryDefault(
 		return defaultValue
 	}
 	return value
-}
-
-func (c *Context) ParamTo(
-	key string,
-	target *string,
-) *Context {
-	if c == nil {
-		return c
-	}
-	if c.bindingErr != nil {
-		return c
-	}
-	if target == nil {
-		c.bindingErr = errors.New("param target cannot be nil")
-		return c
-	}
-	if c.params == nil {
-		*target = ""
-		return c
-	}
-	*target = c.params[key]
-	return c
-}
-
-func (c *Context) QueryTo(
-	key string,
-	target *string,
-) *Context {
-	if c == nil {
-		return c
-	}
-	if c.bindingErr != nil {
-		return c
-	}
-	if target == nil {
-		c.bindingErr = errors.New("query target cannot be nil")
-		return c
-	}
-	if c.R == nil || c.R.URL == nil {
-		*target = ""
-		return c
-	}
-	*target = c.R.URL.Query().Get(key)
-	return c
-}
-
-func (c *Context) QueryDefaultTo(
-	key string,
-	defaultValue string,
-	target *string,
-) *Context {
-	if c == nil {
-		return c
-	}
-	if c.bindingErr != nil {
-		return c
-	}
-	if target == nil {
-		c.bindingErr = errors.New("query default target cannot be nil")
-		return c
-	}
-	if c.R == nil || c.R.URL == nil {
-		*target = defaultValue
-		return c
-	}
-	value := c.R.URL.Query().Get(key)
-	if value == "" {
-		*target = defaultValue
-		return c
-	}
-	*target = value
-	return c
 }

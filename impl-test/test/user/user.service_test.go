@@ -6,6 +6,8 @@ import (
 	"github.com/Gromosome/gorix/gorix"
 	"github.com/Gromosome/gorix/impl-test/promotion"
 	"github.com/Gromosome/gorix/impl-test/user"
+	"github.com/Gromosome/gorix/impl-test/user/repository"
+	"github.com/Gromosome/gorix/impl-test/user/service"
 )
 
 func TestUserServiceWithMockRepository(t *testing.T) {
@@ -13,7 +15,7 @@ func TestUserServiceWithMockRepository(t *testing.T) {
 
 	err := app.OverrideProvider(
 		NewMockUserRepository,
-		gorix.As((*user.UserRepositoryPort)(nil)),
+		gorix.As((*repository.UserRepositoryPort)(nil)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -24,7 +26,7 @@ func TestUserServiceWithMockRepository(t *testing.T) {
 		user.NewUserModule(),
 	)
 
-	var service user.UserServicePort
+	var service service.UserServicePort
 	if err := app.Resolve(&service); err != nil {
 		t.Fatal(err)
 	}

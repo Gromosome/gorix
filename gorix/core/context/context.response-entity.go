@@ -35,8 +35,8 @@ type Redirect struct {
 
 func (c *Context) ResponseEntityJSON(callback func() (any, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -51,8 +51,8 @@ func (c *Context) ResponseEntityJSON(callback func() (any, error)) (any, error) 
 
 func (c *Context) ResponseEntityXML(callback func() (any, error)) (any, error) {
 	c.setResponseType(ResponseTypeXML)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -62,8 +62,8 @@ func (c *Context) ResponseEntityXML(callback func() (any, error)) (any, error) {
 }
 func (c *Context) ResponseEntitySoap11(callback func() (any, error)) (any, error) {
 	c.setResponseType(ResponseTypeSOAP11)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -73,8 +73,8 @@ func (c *Context) ResponseEntitySoap11(callback func() (any, error)) (any, error
 }
 func (c *Context) ResponseEntitySoap12(callback func() (any, error)) (any, error) {
 	c.setResponseType(ResponseTypeSOAP12)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -85,8 +85,8 @@ func (c *Context) ResponseEntitySoap12(callback func() (any, error)) (any, error
 
 func (c *Context) ResponseEntityText(callback func() (string, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -97,8 +97,8 @@ func (c *Context) ResponseEntityText(callback func() (string, error)) (any, erro
 
 func (c *Context) ResponseEntityHTML(callback func() (string, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -109,8 +109,8 @@ func (c *Context) ResponseEntityHTML(callback func() (string, error)) (any, erro
 
 func (c *Context) ResponseEntityTemplate(callback func() (Template, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -121,8 +121,8 @@ func (c *Context) ResponseEntityTemplate(callback func() (Template, error)) (any
 
 func (c *Context) ResponseEntityBlob(callback func() (Blob, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -133,8 +133,8 @@ func (c *Context) ResponseEntityBlob(callback func() (Blob, error)) (any, error)
 
 func (c *Context) ResponseEntityFile(callback func() (File, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -144,8 +144,8 @@ func (c *Context) ResponseEntityFile(callback func() (File, error)) (any, error)
 }
 func (c *Context) ResponseEntityDownload(callback func() (Download, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -156,8 +156,8 @@ func (c *Context) ResponseEntityDownload(callback func() (Download, error)) (any
 
 func (c *Context) ResponseEntityStream(callback func() (Stream, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {
@@ -168,8 +168,8 @@ func (c *Context) ResponseEntityStream(callback func() (Stream, error)) (any, er
 
 func (c *Context) ResponseEntityRedirect(callback func() (string, error)) (any, error) {
 	c.setResponseType(ResponseTypeJSON)
-	if c != nil && c.bindingErr != nil {
-		return nil, c.bindingErr
+	if c != nil && c.err != nil {
+		return nil, c.err
 	}
 	data, err := callback()
 	if err != nil {

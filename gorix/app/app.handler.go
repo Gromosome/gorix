@@ -35,7 +35,16 @@ func (a *App) registerModuleControllers(module any) error {
 		return fmt.Errorf("gorix: module %s must implement Controllers() []any", moduleName)
 	}
 
-	for _, controllerConstructor := range controllersModule.Controllers() {
+	for _, controllerItem := range controllersModule.Controllers() {
+		controllerConstructor, controllerBasePath, controllerVersion, err := resolveControllerRegistration(controllerItem)
+		if err != nil {
+			return fmt.Errorf(
+				"gorix: module %s invalid controller registration: %w",
+				moduleName,
+				err,
+			)
+		}
+
 		controllerValue, err := a.container.Build(controllerConstructor)
 		if err != nil {
 			return fmt.Errorf("gorix: module %s controller build failed: %w", moduleName, err)
@@ -51,13 +60,84 @@ func (a *App) registerModuleControllers(module any) error {
 				moduleName,
 			)
 		}
+		moduleVersion := context.VersionNeutral
 
-		if err := a.registerController(moduleName, string(basePath), controllerValue); err != nil {
+		if versioned, ok := module.(versionedModule); ok {
+			moduleVersion = versioned.APIVersion()
+		}
+
+		fullBasePath := buildVersionedBasePath(
+			a.apiPrefix,
+			moduleVersion,
+			controllerVersion,
+			basePath,
+			controllerBasePath,
+		)
+
+		if err := a.registerController(moduleName, fullBasePath, controllerValue); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+func resolveControllerRegistration(item any) (
+	constructor any,
+	basePath context.BasePath,
+	controllerVersion context.APIVersion,
+	err error,
+) {
+	switch controller := item.(type) {
+	case ControllerRegistration:
+		if controller.Constructor == nil {
+			return nil, "", "", fmt.Errorf("controller constructor cannot be nil")
+		}
+
+		return controller.Constructor, controller.BasePath, controller.Version, nil
+
+	case *ControllerRegistration:
+		if controller == nil {
+			return nil, "", "", fmt.Errorf("controller registration cannot be nil")
+		}
+
+		if controller.Constructor == nil {
+			return nil, "", "", fmt.Errorf("controller constructor cannot be nil")
+		}
+
+		return controller.Constructor, controller.BasePath, controller.Version, nil
+
+	default:
+		// Backward compatibility:
+		// Controllers() []any { return []any{NewUserController} }
+		return item, "", "", nil
+	}
+}
+func buildVersionedBasePath(
+	apiPrefix context.BasePath,
+	moduleVersion context.APIVersion,
+	controllerVersion context.APIVersion,
+	moduleBasePath context.BasePath,
+	controllerBasePath context.BasePath,
+) string {
+	version := moduleVersion
+
+	if controllerVersion != context.VersionNeutral {
+		version = controllerVersion
+	}
+
+	if version == context.VersionNeutral {
+		return NormalizeRoute(
+			string(moduleBasePath),
+			string(controllerBasePath),
+		)
+	}
+
+	return NormalizeRoute(
+		string(apiPrefix),
+		version.String(),
+		string(moduleBasePath),
+		string(controllerBasePath),
+	)
 }
 func (a *App) registerController(moduleName string, basePath string, controllerValue reflect.Value) error {
 	controllerName := controllerValue.Type().Name()
@@ -449,15 +529,25 @@ func (a *App) ResolveFilters(path string) []hook.Filter {
 	return result
 }
 
-func NormalizeRoute(basePath string, path string) string {
-	basePath = "/" + strings.Trim(basePath, "/")
-	path = "/" + strings.Trim(path, "/")
+func NormalizeRoute(parts ...string) string {
+	cleanParts := make([]string, 0)
 
-	if path == "/" {
-		return basePath
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		part = strings.Trim(part, "/")
+
+		if part == "" {
+			continue
+		}
+
+		cleanParts = append(cleanParts, part)
 	}
 
-	return basePath + path
+	if len(cleanParts) == 0 {
+		return "/"
+	}
+
+	return "/" + strings.Join(cleanParts, "/")
 }
 
 func (a *App) PrintRoutes() {

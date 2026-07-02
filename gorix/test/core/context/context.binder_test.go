@@ -21,8 +21,8 @@ func TestBindBodyDecodesJSONAndValidates(t *testing.T) {
 	ctx := context2.NewContext(nil, request)
 
 	var target bindDTO
-	_ = ctx.BindJSONBody(&target)
-	if err := ctx.GetBindingErr(); err != nil {
+	err := ctx.BindJSONBody(&target)
+	if err != nil {
 		t.Fatalf("BindBody returned error: %v", err)
 	}
 	if target.Name != "bob" || target.Age != 30 || !target.Active || len(target.Tags) != 2 {

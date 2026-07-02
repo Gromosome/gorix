@@ -1,36 +1,40 @@
-package user
+package service
 
-import "github.com/Gromosome/gorix/gorix"
+import (
+	"github.com/Gromosome/gorix/gorix"
+	"github.com/Gromosome/gorix/impl-test/user/dto"
+	"github.com/Gromosome/gorix/impl-test/user/repository"
+)
 
 type UserServicePort interface {
 	GetByID(
 		ctx *gorix.Context,
 		id int64,
-	) (*User, error)
+	) (*repository.User, error)
 
 	GetAll(
 		ctx *gorix.Context,
-	) ([]User, error)
+	) ([]repository.User, error)
 
 	GetActive(
 		ctx *gorix.Context,
-		query UserQueryDto,
-	) ([]User, error)
+		query dto.UserQueryDto,
+	) ([]repository.User, error)
 
 	GetSummary(
 		ctx *gorix.Context,
-	) (*UserSummary, error)
+	) (*repository.UserSummary, error)
 
 	Create(
 		ctx *gorix.Context,
-		request CreateUserDto,
-	) (*User, error)
+		request dto.CreateUserDto,
+	) (*repository.User, error)
 
 	Update(
 		ctx *gorix.Context,
 		id int64,
-		request UpdateUserDto,
-	) (*User, error)
+		request dto.UpdateUserDto,
+	) (*repository.User, error)
 
 	Delete(
 		ctx *gorix.Context,

@@ -51,6 +51,7 @@ type App struct {
 	filters      []hook.FilterConfig
 	databases    *database.Manager
 	documents    *document.Manager
+	apiPrefix    context.BasePath
 }
 
 func NewApp() *App {
@@ -92,7 +93,12 @@ func NewApp() *App {
 		middlewares:  make([]hook.MiddlewareConfig, 0),
 		interceptors: make([]hook.InterceptorConfig, 0),
 		filters:      make([]hook.FilterConfig, 0),
+		apiPrefix:    "",
 	}
+}
+func (a *App) APIPrefix(prefix context.BasePath) *App {
+	a.apiPrefix = prefix
+	return a
 }
 func (a *App) RouteEntries() []routeEntry {
 	return a.routeEntries

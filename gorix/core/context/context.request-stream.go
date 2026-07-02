@@ -16,14 +16,14 @@ func (c *Context) StreamBody(
 	}
 
 	if c.R == nil || c.R.Body == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("body", "stream", "request body cannot be nil"),
 		}))
 		return c
 	}
 
 	if handler == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("body", "stream", "stream handler cannot be nil"),
 		}))
 		return c
@@ -34,7 +34,7 @@ func (c *Context) StreamBody(
 	}(c.R.Body)
 
 	if err := handler(c.R.Body); err != nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError(
 				"body",
 				"stream",
@@ -76,14 +76,14 @@ func (c *Context) StreamFile(
 	}
 
 	if c.R == nil || c.R.Body == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("file", "stream", "request body cannot be nil"),
 		}))
 		return c
 	}
 
 	if handler == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("file", "stream", "file stream handler cannot be nil"),
 		}))
 		return c
@@ -93,7 +93,7 @@ func (c *Context) StreamFile(
 	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
 
 	if contentType != "multipart/form-data" {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError(
 				"headers.Content-Type",
 				"content_type",
@@ -105,7 +105,7 @@ func (c *Context) StreamFile(
 
 	reader, err := c.R.MultipartReader()
 	if err != nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError(
 				"file",
 				"multipart",
@@ -124,7 +124,7 @@ func (c *Context) StreamFile(
 		}
 
 		if err != nil {
-			c.setBindingError(NewValidationError([]FieldError{
+			c.setError(NewValidationError([]FieldError{
 				NewFieldError(
 					"file",
 					"multipart",
@@ -158,7 +158,7 @@ func (c *Context) StreamFile(
 		if err := handler(file); err != nil {
 			_ = part.Close()
 
-			c.setBindingError(NewValidationError([]FieldError{
+			c.setError(NewValidationError([]FieldError{
 				NewFieldError(
 					"file",
 					"stream",
@@ -172,7 +172,7 @@ func (c *Context) StreamFile(
 	}
 
 	if !found {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError(
 				"file",
 				"required",
@@ -193,7 +193,7 @@ func (c *Context) LimitBody(
 	}
 
 	if c.R == nil || c.W == nil {
-		c.setBindingError(NewValidationError([]FieldError{
+		c.setError(NewValidationError([]FieldError{
 			NewFieldError("body", "limit", "request or response writer cannot be nil"),
 		}))
 		return c

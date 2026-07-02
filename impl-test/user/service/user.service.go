@@ -1,14 +1,16 @@
-package user
+package service
 
 import (
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
+	"github.com/Gromosome/gorix/impl-test/user/dto"
+	"github.com/Gromosome/gorix/impl-test/user/repository"
 )
 
 type UserService struct {
-	userRepository UserRepositoryPort
+	userRepository repository.UserRepositoryPort
 }
 
-func NewUserService(userRepository UserRepositoryPort) *UserService {
+func NewUserService(userRepository repository.UserRepositoryPort) *UserService {
 	return &UserService{
 		userRepository: userRepository,
 	}
@@ -17,20 +19,20 @@ func NewUserService(userRepository UserRepositoryPort) *UserService {
 func (s *UserService) GetByID(
 	ctx *gorixcontext.Context,
 	id int64,
-) (*User, error) {
+) (*repository.User, error) {
 	return s.userRepository.FindByID(ctx, id)
 }
 
 func (s *UserService) GetAll(
 	ctx *gorixcontext.Context,
-) ([]User, error) {
+) ([]repository.User, error) {
 	return s.userRepository.FindAll(ctx)
 }
 
 func (s *UserService) GetActive(
 	ctx *gorixcontext.Context,
-	query UserQueryDto,
-) ([]User, error) {
+	query dto.UserQueryDto,
+) ([]repository.User, error) {
 	return s.userRepository.FindActiveUsers(
 		ctx,
 		query.Limit,
@@ -40,16 +42,16 @@ func (s *UserService) GetActive(
 
 func (s *UserService) GetSummary(
 	ctx *gorixcontext.Context,
-) (*UserSummary, error) {
+) (*repository.UserSummary, error) {
 	return s.userRepository.Summary(ctx)
 }
 
 func (s *UserService) Create(
 	ctx *gorixcontext.Context,
-	request CreateUserDto,
-) (*User, error) {
+	request dto.CreateUserDto,
+) (*repository.User, error) {
 
-	user := &User{
+	user := &repository.User{
 		Name:   request.Name,
 		Email:  request.Email,
 		Active: true,
@@ -68,8 +70,8 @@ func (s *UserService) Create(
 func (s *UserService) Update(
 	ctx *gorixcontext.Context,
 	id int64,
-	request UpdateUserDto,
-) (*User, error) {
+	request dto.UpdateUserDto,
+) (*repository.User, error) {
 	user, err := s.userRepository.FindByID(ctx, id)
 	if err != nil {
 		return nil, err

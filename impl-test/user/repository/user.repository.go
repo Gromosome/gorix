@@ -1,4 +1,4 @@
-package user
+package repository
 
 import (
 	"fmt"
@@ -37,12 +37,6 @@ func (r *UserRepository) FindByID(
 ) (*User, error) {
 	user, err := r.repo.FindByID(ctx, id)
 	if err != nil {
-		if gorix.IsEntityNotFound(err) {
-			return nil, fmt.Errorf(
-				"user %d not found",
-				id,
-			)
-		}
 		return nil, err
 	}
 	return user, nil

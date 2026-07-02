@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	gorixcontext "github.com/Gromosome/gorix/gorix/core/context"
-	"github.com/Gromosome/gorix/impl-test/user"
+	"github.com/Gromosome/gorix/impl-test/user/controller"
+	"github.com/Gromosome/gorix/impl-test/user/repository"
 )
 
 func TestUserControllerFindByID(t *testing.T) {
 	mockService := NewMockUserService()
 
 	// promotionService is nil because this test does not call /promotions.
-	controller := user.NewUserController(
+	controller := controller.NewUserController(
 		mockService,
 		nil,
 	)
@@ -45,7 +46,7 @@ func TestUserControllerFindByID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	result, ok := response.(*user.User)
+	result, ok := response.(*repository.User)
 	if !ok {
 		t.Fatalf(
 			"expected *user.User, got %T",

@@ -126,3 +126,21 @@ var ApplyInterceptor = hook.ApplyInterceptor
 var ApplyFilter = hook.ApplyFilter
 var NewValidationError = context.NewValidationError
 var NewFieldError = context.NewFieldError
+
+type FileStream = context.FileStream
+type File = context.File
+type Download = context.Download
+type Blob = context.Blob
+type DownStream = context.Stream
+
+// APIVersion Api Versioning
+type APIVersion = context.APIVersion
+
+const (
+	VersionNeutral = context.VersionNeutral
+	V1             = context.V1
+	V2             = context.V2
+	V3             = context.V3
+)
+
+var Version = context.Version

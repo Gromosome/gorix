@@ -25,7 +25,7 @@ type Context struct {
 	status       int
 	committed    bool
 	params       map[string]string
-	bindingErr   error
+	err          error
 	logger       *logger.Logger
 }
 
@@ -40,12 +40,12 @@ func NewContext(
 	}
 
 	return &Context{
-		native:     base,
-		W:          w,
-		R:          r,
-		params:     make(map[string]string),
-		bindingErr: nil,
-		logger:     logger.NewLogger(logger.Wrap1),
+		native: base,
+		W:      w,
+		R:      r,
+		params: make(map[string]string),
+		err:    nil,
+		logger: logger.NewLogger(logger.Wrap1),
 	}
 }
 func (c *Context) setStatus(status Code) {
@@ -85,12 +85,8 @@ func (c *Context) GetHeaderOf(key string, target *string) *Context {
 	return c
 }
 
-func (c *Context) setBindingError(err error) {
-	c.bindingErr = err
-}
-
-func (c *Context) GetBindingErr() error {
-	return c.bindingErr
+func (c *Context) setError(err error) {
+	c.err = err
 }
 
 func (c *Context) ResponseType() ResponseType {

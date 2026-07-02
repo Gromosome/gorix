@@ -1,6 +1,8 @@
-package user
+package repository
 
-import "github.com/Gromosome/gorix/gorix"
+import (
+	"github.com/Gromosome/gorix/gorix"
+)
 
 type UserRepositoryPort interface {
 	FindByID(

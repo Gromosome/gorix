@@ -171,6 +171,11 @@ func ValidateModuleFile(path string, folderName string) error {
 			}
 			hasBasePath = true
 
+		case "APIVersion":
+			if err := validateModuleAPIVersionSignature(fs, path, fn); err != nil {
+				return err
+			}
+
 		case "Controllers":
 			if err := validateModuleControllersSignature(fs, path, fn); err != nil {
 				return err
@@ -190,7 +195,7 @@ func ValidateModuleFile(path string, folderName string) error {
 				line,
 				col,
 				fmt.Sprintf(
-					"module file allows only receiver methods BasePath, Providers, Controllers, found %s",
+					"module file allows only receiver methods BasePath, Providers, Controllers,APIVersion found %s",
 					fn.Name.Name,
 				),
 			)
@@ -233,7 +238,6 @@ func ValidateModuleFile(path string, folderName string) error {
 			"module file must have Controllers() []any",
 		)
 	}
-
 	return nil
 }
 func validateModuleBasePathSignature(fs *token.FileSet, path string, fn *ast.FuncDecl) error {
@@ -268,6 +272,43 @@ func validateModuleBasePathSignature(fs *token.FileSet, path string, fn *ast.Fun
 			line,
 			col,
 			"BasePath must return gorix.BasePath",
+		)
+	}
+
+	return nil
+}
+func validateModuleAPIVersionSignature(fs *token.FileSet, path string, fn *ast.FuncDecl) error {
+	if fn.Type.Params != nil && len(fn.Type.Params.List) > 0 {
+		line, col := positionOf(fs, fn)
+
+		return newValidationError(
+			path,
+			line,
+			col,
+			"APIVersion must not have parameters",
+		)
+	}
+
+	if fn.Type.Results == nil || len(fn.Type.Results.List) != 1 {
+		line, col := positionOf(fs, fn)
+
+		return newValidationError(
+			path,
+			line,
+			col,
+			"APIVersion must return gorix.APIVersion",
+		)
+	}
+
+	returnType := ExprString(fn.Type.Results.List[0].Type)
+	if returnType != "gorix.APIVersion" {
+		line, col := positionOf(fs, fn.Type.Results.List[0].Type)
+
+		return newValidationError(
+			path,
+			line,
+			col,
+			"APIVersion must return gorix.APIVersion",
 		)
 	}
 

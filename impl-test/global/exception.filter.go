@@ -79,6 +79,14 @@ func (f *ExceptionFilter) Catch(ctx *gorix.ExceptionContext) {
 			}
 			return
 		}
+		if gorix.IsEntityNotFound(ctx.Error) {
+			_ = ctx.Context.Status(gorix.StatusNotFound).JSONFault(ErrorDTO{
+				Success: false,
+				Error:   "resource not found",
+				Message: "resource not found",
+			})
+			return
+		}
 
 		_ = ctx.Context.Status(ctx.StatusCode).JSONFault(ErrorDTO{
 			Success: false,

@@ -1,16 +1,18 @@
-package user
+package controller
 
 import (
 	"github.com/Gromosome/gorix/gorix"
 	"github.com/Gromosome/gorix/impl-test/promotion"
+	"github.com/Gromosome/gorix/impl-test/user/dto"
+	"github.com/Gromosome/gorix/impl-test/user/service"
 )
 
 type UserController struct {
-	userService      UserServicePort
+	userService      service.UserServicePort
 	promotionService *promotion.PromotionService
 }
 
-func NewUserController(userService UserServicePort, promotionService *promotion.PromotionService) *UserController {
+func NewUserController(userService service.UserServicePort, promotionService *promotion.PromotionService) *UserController {
 	return &UserController{
 		userService:      userService,
 		promotionService: promotionService,
@@ -30,7 +32,7 @@ func (c *UserController) FindByID() (
 ) {
 	return gorix.GET, "/:id", func(
 		ctx *gorix.Context,
-		params gorix.Params[UserPathDto],
+		params gorix.Params[dto.UserPathDto],
 	) (any, error) {
 		return ctx.
 			Status(gorix.StatusOK).
@@ -64,7 +66,7 @@ func (c *UserController) FindActive() (
 ) {
 	return gorix.GET, "/active", func(
 		ctx *gorix.Context,
-		query gorix.Params[UserQueryDto],
+		query gorix.Query[dto.UserQueryDto],
 	) (any, error) {
 		return ctx.
 			Status(gorix.StatusOK).
@@ -96,7 +98,7 @@ func (c *UserController) Create() (
 ) {
 	return gorix.POST, "/", func(
 		ctx *gorix.Context,
-		body gorix.Body[CreateUserDto],
+		body gorix.Body[dto.CreateUserDto],
 	) (any, error) {
 		return ctx.
 			Status(gorix.StatusCreated).
@@ -116,8 +118,8 @@ func (c *UserController) Update() (
 ) {
 	return gorix.PUT, "/:id", func(
 		ctx *gorix.Context,
-		params gorix.Params[UserPathDto],
-		body gorix.Body[UpdateUserDto],
+		params gorix.Params[dto.UserPathDto],
+		body gorix.Body[dto.UpdateUserDto],
 	) (any, error) {
 		return ctx.
 			Status(gorix.StatusOK).
@@ -138,7 +140,7 @@ func (c *UserController) Delete() (
 ) {
 	return gorix.DELETE, "/:id", func(
 		ctx *gorix.Context,
-		params gorix.Params[UserPathDto],
+		params gorix.Params[dto.UserPathDto],
 	) (any, error) {
 		return ctx.
 			Status(gorix.StatusNoContent).

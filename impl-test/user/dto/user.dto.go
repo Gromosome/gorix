@@ -1,4 +1,4 @@
-package user
+package dto
 
 type UserPathDto struct {
 	ID int64 `param:"id" validate:"required,min=1"`
